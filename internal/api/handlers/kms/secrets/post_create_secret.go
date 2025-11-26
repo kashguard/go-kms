@@ -10,7 +10,6 @@ import (
 	"github.com/kashguard/go-kms/internal/api/httperrors"
 	"github.com/kashguard/go-kms/internal/kms/secret"
 	"github.com/kashguard/go-kms/internal/types"
-	"github.com/kashguard/go-kms/internal/types/kms"
 	"github.com/kashguard/go-kms/internal/util"
 	"github.com/labstack/echo/v4"
 )
@@ -24,23 +23,30 @@ func postCreateSecretHandler(s *api.Server) echo.HandlerFunc {
 		ctx := c.Request().Context()
 		log := util.LogFromContext(ctx)
 
-		params := kms.NewPostCreateSecretRouteParams()
-		if err := params.BindRequest(c.Request(), nil); err != nil {
+		// 检查 Secret 服务是否启用
+		if s.SecretService == nil {
+			return httperrors.NewHTTPError(http.StatusServiceUnavailable, types.PublicHTTPErrorTypeGeneric, "Secret service is not enabled")
+		}
+
+		var body types.PostCreateSecretPayload
+		if err := util.BindAndValidateBody(c, &body); err != nil {
 			return err
 		}
 
-		// 解码 base64 数据
-		if params.Payload.Data == nil {
+		if body.KeyID == nil {
+			return httperrors.NewHTTPError(http.StatusBadRequest, types.PublicHTTPErrorTypeGeneric, "key_id is required")
+		}
+		if body.Data == nil {
 			return httperrors.NewHTTPError(http.StatusBadRequest, types.PublicHTTPErrorTypeGeneric, "data is required")
 		}
 
-		decodedData, err := base64.StdEncoding.DecodeString(params.Payload.Data.String())
+		decodedData, err := base64.StdEncoding.DecodeString(body.Data.String())
 		if err != nil {
 			return httperrors.NewHTTPError(http.StatusBadRequest, types.PublicHTTPErrorTypeGeneric, "Invalid base64 data format")
 		}
 
 		// 调用服务
-		keyID, err := s.SecretService.CreateSecret(ctx, *params.Payload.KeyID, decodedData)
+		keyID, err := s.SecretService.CreateSecret(ctx, *body.KeyID, decodedData)
 		if err != nil {
 			log.Error().Err(err).Msg("Failed to create secret")
 			if errors.Is(err, secret.ErrSecretAlreadyExists) {

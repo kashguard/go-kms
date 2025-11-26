@@ -31,6 +31,8 @@ services:
       # https://code.visualstudio.com/remote/advancedcontainers/persist-bash-history
       # keep user development .bash_history between container restarts
       - bash-history:/home/development/commandhistory
+      # persist SoftHSM tokens across restarts
+      - softhsm-data:/home/development/.config/softhsm2
 
     depends_on:
       - postgres
@@ -71,6 +73,21 @@ services:
       # path to the changie config
       CHANGIE_CONFIG_PATH: "/app/.changie-go-starter.yaml"
 
+      # KMS HSM configuration
+      # Note: KMS_HSM_LIBRARY and KMS_HSM_SLOT will be auto-detected by init-softhsm.sh if not set
+      KMS_STORAGE_BACKEND: "postgresql"
+      KMS_HSM_TYPE: "software"
+      # KMS_HSM_LIBRARY: ""  # Leave empty to auto-detect, or set to specific path
+      # KMS_HSM_SLOT: "0"  # Leave empty to auto-detect, or set to specific slot
+      KMS_HSM_PIN: "1234"
+      KMS_HSM_LABEL: "KMS"
+      KMS_ENABLE_AUDIT: "true"
+      KMS_ENABLE_POLICY: "true"
+      KMS_ENABLE_SECRET_SERVICE: "true"
+      KMS_SECRET_KEY_ID: "key-f3081526-18b5-47f2-88dd-58cf59f5be4d"
+      # Use custom OpenSSL 3.2.2 for Ed25519 support
+      LD_LIBRARY_PATH: "/home/development/openssl-ed25519/lib:/opt/openssl-ed25519/lib:/usr/lib/aarch64-linux-gnu:/lib/aarch64-linux-gnu"
+
     # Uncomment the next four lines if you will use a ptrace-based debugger like C++, Go, and Rust.
     cap_add:
       - SYS_PTRACE
@@ -85,8 +102,41 @@ services:
         sudo chown -R development:development /app/api/tmp
         sudo chown -R development:development /app/bin
         sudo chown -R development:development /app/tmp
+        sudo mkdir -p /home/development/.config/softhsm2
+        sudo chown -R development:development /home/development/.config/softhsm2
         chmod +x /app/rksh
         git config --global --add safe.directory /app
+        # Initialize SoftHSM if KMS is enabled
+        if [ -n "$$KMS_HSM_TYPE" ] && [ "$$KMS_HSM_TYPE" = "software" ]; then
+          echo "Initializing SoftHSM..."
+          # Copy OpenSSL libraries from build directory if not already installed
+          OPENSSL_BUILD_DIR=$$(find /app/tmp -type d -name 'openssl-3.2.2' -exec test -f {}/libcrypto.so.3 \; -print 2>/dev/null | head -1)
+          if [ -n "$$OPENSSL_BUILD_DIR" ] && [ ! -d /home/development/openssl-ed25519/lib ]; then
+            echo "Copying OpenSSL libraries from build directory..."
+            mkdir -p /home/development/openssl-ed25519/lib
+            cp "$$OPENSSL_BUILD_DIR/libcrypto.so"* "$$OPENSSL_BUILD_DIR/libssl.so"* /home/development/openssl-ed25519/lib/ 2>/dev/null || true
+            echo "OpenSSL libraries copied to /home/development/openssl-ed25519/lib"
+          fi
+          # Set LD_LIBRARY_PATH to use custom OpenSSL 3.2.2 (for Ed25519 support)
+          if [ -d /home/development/openssl-ed25519/lib ] && [ -f /home/development/openssl-ed25519/lib/libcrypto.so.3 ]; then
+            export LD_LIBRARY_PATH="/home/development/openssl-ed25519/lib:$$LD_LIBRARY_PATH"
+            echo "Using custom OpenSSL from /home/development/openssl-ed25519/lib"
+          elif [ -d /opt/openssl-ed25519/lib ]; then
+            export LD_LIBRARY_PATH="/opt/openssl-ed25519/lib:$$LD_LIBRARY_PATH"
+            echo "Using custom OpenSSL from /opt/openssl-ed25519/lib"
+          fi
+          /app/scripts/init-softhsm.sh || echo "Warning: SoftHSM initialization failed, but continuing..."
+          # Load auto-detected library path if available
+          if [ -f /tmp/kms_hsm_library ]; then
+            export KMS_HSM_LIBRARY="$$(cat /tmp/kms_hsm_library)"
+            echo "Using auto-detected SoftHSM library: $$KMS_HSM_LIBRARY"
+          fi
+          # Load auto-detected slot if available (overrides environment variable)
+          if [ -f /tmp/kms_hsm_slot ]; then
+            export KMS_HSM_SLOT="$$(cat /tmp/kms_hsm_slot)"
+            echo "Using auto-detected SoftHSM slot: $$KMS_HSM_SLOT"
+          fi
+        fi
         while sleep 1000; do :; done
 
   postgres:
@@ -166,3 +216,4 @@ volumes:
 
   # https://code.visualstudio.com/remote/advancedcontainers/persist-bash-history
   bash-history:
+  softhsm-data:

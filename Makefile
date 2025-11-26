@@ -2,6 +2,11 @@
 # --- Building
 ### -----------------------
 
+OPENSSL_VERSION ?= 3.2.2
+SOFTHSM_VERSION ?= 2.6.1
+OPENSSL_PREFIX ?= /opt/openssl-ed25519
+SOFTHSM_PREFIX ?= /opt/softhsm-ed25519
+
 # first is default target when running "make" without args
 build: ##- Default 'make' target: sql, swagger, go-generate-handlers, go-format, go-build and lint.
 	@$(MAKE) build-pre
@@ -60,6 +65,29 @@ go-generate: ##- Runs go generate.
 
 check-handlers: ##- (opt) Checks if implemented handlers match their spec (path).
 	gsdev handlers check
+
+.PHONY: softhsm-ed25519
+softhsm-ed25519: ##- Build OpenSSL + SoftHSM with Ed25519 support and install libsofthsm2.so.
+	@set -euo pipefail; \
+	echo "Building OpenSSL $(OPENSSL_VERSION) with Ed25519 support..."; \
+	TMP_OPENSSL="tmp/build-openssl"; \
+	rm -rf "$$TMP_OPENSSL"; \
+	mkdir -p "$$TMP_OPENSSL"; \
+	curl -sSL "https://www.openssl.org/source/openssl-$(OPENSSL_VERSION).tar.gz" -o "$$TMP_OPENSSL/openssl.tar.gz"; \
+	tar -xzf "$$TMP_OPENSSL/openssl.tar.gz" -C "$$TMP_OPENSSL"; \
+	cd "$$TMP_OPENSSL/openssl-$(OPENSSL_VERSION)" && ./Configure --prefix=$(OPENSSL_PREFIX) linux-x86_64 shared && make -j$$(nproc) && sudo make install_sw; \
+	echo "Building SoftHSM $(SOFTHSM_VERSION) against custom OpenSSL..."; \
+	TMP_SOFTHSM="tmp/build-softhsm"; \
+	rm -rf "$$TMP_SOFTHSM"; \
+	mkdir -p "$$TMP_SOFTHSM"; \
+	curl -sSL "https://github.com/opendnssec/SoftHSMv2/archive/refs/tags/$(SOFTHSM_VERSION).tar.gz" -o "$$TMP_SOFTHSM/softhsm.tar.gz"; \
+	tar -xzf "$$TMP_SOFTHSM/softhsm.tar.gz" -C "$$TMP_SOFTHSM"; \
+	cd "$$TMP_SOFTHSM/SoftHSMv2-$(SOFTHSM_VERSION)" && PKG_CONFIG_PATH=$(OPENSSL_PREFIX)/lib/pkgconfig ./configure --prefix=$(SOFTHSM_PREFIX) --with-openssl=$(OPENSSL_PREFIX) --with-objectstore-backend=file && make -j$$(nproc) && sudo make install; \
+	echo "Installing libsofthsm2.so to /usr/lib/softhsm ..."; \
+	sudo mkdir -p /usr/lib/softhsm; \
+	sudo cp $(SOFTHSM_PREFIX)/lib/softhsm/libsofthsm2.so /usr/lib/softhsm/libsofthsm2.so; \
+	sudo ldconfig; \
+	echo "SoftHSM with Ed25519 support installed. Restart containers to pick up the new library."
 
 # https://golang.org/pkg/cmd/go/internal/generate/
 # To convey to humans and machine tools that code is generated,

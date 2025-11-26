@@ -181,6 +181,11 @@ func NewSecretService(
 	auditLogger audit.Logger,
 	cfg config.Server,
 ) (secret.Service, error) {
+	// 如果 Secret 服务未启用，返回 nil（不使用）
+	if !cfg.KMS.EnableSecretService {
+		return nil, nil
+	}
+
 	secretKMSKeyID := cfg.KMS.SecretKMSKeyID
 	if secretKMSKeyID == "" {
 		// 如果没有配置，使用默认的密钥别名查找
@@ -188,7 +193,7 @@ func NewSecretService(
 			// 这里需要根据 alias 查找 keyID，暂时返回错误
 			return nil, fmt.Errorf("KMS_SECRET_KEY_ID is required when using secret service")
 		}
-		return nil, fmt.Errorf("KMS_SECRET_KEY_ID is required")
+		return nil, fmt.Errorf("KMS_SECRET_KEY_ID is required when using secret service")
 	}
 	return secret.NewService(encryptionService, keyService, metadataStore, policyEngine, auditLogger, secretKMSKeyID)
 }

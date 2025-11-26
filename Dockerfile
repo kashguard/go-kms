@@ -69,6 +69,12 @@ RUN apt-get update \
     tmux \
     rsync \
     trivy \
+    softhsm2 \
+    build-essential \
+    autoconf \
+    automake \
+    libtool \
+    m4 \
     # --- END DEVELOPMENT ---
     #
     && apt-get clean \

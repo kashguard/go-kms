@@ -2,6 +2,7 @@ package audit
 
 import (
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/go-openapi/strfmt"
@@ -9,7 +10,6 @@ import (
 	"github.com/kashguard/go-kms/internal/api/httperrors"
 	"github.com/kashguard/go-kms/internal/kms/storage"
 	"github.com/kashguard/go-kms/internal/types"
-	"github.com/kashguard/go-kms/internal/types/kms"
 	"github.com/kashguard/go-kms/internal/util"
 	"github.com/labstack/echo/v4"
 )
@@ -23,50 +23,51 @@ func getAuditLogsHandler(s *api.Server) echo.HandlerFunc {
 		ctx := c.Request().Context()
 		log := util.LogFromContext(ctx)
 
-		params := kms.NewGetAuditLogsRouteParams()
-		if err := params.BindRequest(c.Request(), nil); err != nil {
-			return err
-		}
-
 		// 构建过滤器
 		filter := &storage.AuditLogFilter{
 			Limit:  100, //nolint:mnd // default limit for audit logs
 			Offset: 0,
 		}
 
-		// 解析查询参数
-		if params.KeyID != nil {
-			filter.KeyID = *params.KeyID
+		// 解析查询参数（直接使用 Echo 的 QueryParam）
+		if keyID := c.QueryParam("key_id"); keyID != "" {
+			filter.KeyID = keyID
 		}
-		if params.UserID != nil {
-			filter.UserID = *params.UserID
+		if userID := c.QueryParam("user_id"); userID != "" {
+			filter.UserID = userID
 		}
-		if params.EventType != nil {
-			filter.EventType = *params.EventType
+		if eventType := c.QueryParam("event_type"); eventType != "" {
+			filter.EventType = eventType
 		}
-		if params.Operation != nil {
-			filter.Operation = *params.Operation
+		if operation := c.QueryParam("operation"); operation != "" {
+			filter.Operation = operation
 		}
-		if params.Result != nil {
-			filter.Result = *params.Result
+		if result := c.QueryParam("result"); result != "" {
+			filter.Result = result
 		}
 
 		// 解析时间参数
-		if params.StartTime != nil {
-			startTime := time.Time(*params.StartTime)
-			filter.StartTime = &startTime
+		if startTimeStr := c.QueryParam("start_time"); startTimeStr != "" {
+			if startTime, err := time.Parse(time.RFC3339, startTimeStr); err == nil {
+				filter.StartTime = &startTime
+			}
 		}
-		if params.EndTime != nil {
-			endTime := time.Time(*params.EndTime)
-			filter.EndTime = &endTime
+		if endTimeStr := c.QueryParam("end_time"); endTimeStr != "" {
+			if endTime, err := time.Parse(time.RFC3339, endTimeStr); err == nil {
+				filter.EndTime = &endTime
+			}
 		}
 
 		// 解析 limit 和 offset
-		if params.Limit != nil {
-			filter.Limit = int(*params.Limit)
+		if limitStr := c.QueryParam("limit"); limitStr != "" {
+			if limit, err := strconv.Atoi(limitStr); err == nil && limit > 0 {
+				filter.Limit = limit
+			}
 		}
-		if params.Offset != nil {
-			filter.Offset = int(*params.Offset)
+		if offsetStr := c.QueryParam("offset"); offsetStr != "" {
+			if offset, err := strconv.Atoi(offsetStr); err == nil && offset >= 0 {
+				filter.Offset = offset
+			}
 		}
 
 		// 查询审计日志

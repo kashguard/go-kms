@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -381,6 +382,15 @@ func AuthWithConfig(config AuthConfig) echo.MiddlewareFunc {
 			}
 
 			auth.EnrichEchoContextWithCredentials(c, res)
+
+			// 将 IP 地址存储到 context
+			req := c.Request()
+			ipAddress := c.RealIP()
+			if ipAddress == "" {
+				ipAddress = req.RemoteAddr
+			}
+			ctx := context.WithValue(req.Context(), util.CTXKeyIPAddress, ipAddress)
+			c.SetRequest(req.WithContext(ctx))
 
 			log.Trace().Str("user_id", user.ID).Msg("Auth token is valid, allowing request")
 

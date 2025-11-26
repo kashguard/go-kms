@@ -10,7 +10,6 @@ import (
 	"github.com/kashguard/go-kms/internal/api/httperrors"
 	"github.com/kashguard/go-kms/internal/kms/key"
 	"github.com/kashguard/go-kms/internal/types"
-	"github.com/kashguard/go-kms/internal/types/kms"
 	"github.com/kashguard/go-kms/internal/util"
 	"github.com/labstack/echo/v4"
 )
@@ -24,26 +23,30 @@ func postCreateKeyHandler(s *api.Server) echo.HandlerFunc {
 		ctx := c.Request().Context()
 		log := util.LogFromContext(ctx)
 
-		params := kms.NewPostCreateKeyRouteParams()
-		if err := params.BindRequest(c.Request(), nil); err != nil {
+		var body types.PostCreateKeyPayload
+		if err := util.BindAndValidateBody(c, &body); err != nil {
 			return err
 		}
 
 		// 转换请求
-		req := &key.CreateKeyRequest{
-			Alias:       params.Payload.Alias,
-			Description: params.Payload.Description,
-			KeyType:     key.KeyType(*params.Payload.KeyType),
-			Tags:        params.Payload.Tags,
-			PolicyID:    params.Payload.PolicyID,
+		if body.KeyType == nil {
+			return httperrors.NewHTTPError(http.StatusBadRequest, types.PublicHTTPErrorTypeGeneric, "key_type is required")
 		}
 
-		if params.Payload.KeySpec != nil {
+		req := &key.CreateKeyRequest{
+			Alias:       body.Alias,
+			Description: body.Description,
+			KeyType:     key.KeyType(*body.KeyType),
+			Tags:        body.Tags,
+			PolicyID:    body.PolicyID,
+		}
+
+		if body.KeySpec != nil {
 			req.KeySpec = &key.KeySpec{
-				Algorithm:  params.Payload.KeySpec.Algorithm,
-				KeySize:    int(params.Payload.KeySpec.KeySize),
-				Curve:      params.Payload.KeySpec.Curve,
-				Attributes: params.Payload.KeySpec.Attributes,
+				Algorithm:  body.KeySpec.Algorithm,
+				KeySize:    int(body.KeySpec.KeySize),
+				Curve:      body.KeySpec.Curve,
+				Attributes: body.KeySpec.Attributes,
 			}
 		}
 

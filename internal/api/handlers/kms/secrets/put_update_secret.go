@@ -10,7 +10,6 @@ import (
 	"github.com/kashguard/go-kms/internal/api/httperrors"
 	"github.com/kashguard/go-kms/internal/kms/secret"
 	"github.com/kashguard/go-kms/internal/types"
-	"github.com/kashguard/go-kms/internal/types/kms"
 	"github.com/kashguard/go-kms/internal/util"
 	"github.com/labstack/echo/v4"
 )
@@ -24,23 +23,32 @@ func putUpdateSecretHandler(s *api.Server) echo.HandlerFunc {
 		ctx := c.Request().Context()
 		log := util.LogFromContext(ctx)
 
-		params := kms.NewPutUpdateSecretRouteParams()
-		if err := params.BindRequest(c.Request(), nil); err != nil {
+		// 检查 Secret 服务是否启用
+		if s.SecretService == nil {
+			return httperrors.NewHTTPError(http.StatusServiceUnavailable, types.PublicHTTPErrorTypeGeneric, "Secret service is not enabled")
+		}
+
+		keyID := c.Param("keyId")
+		if keyID == "" {
+			return httperrors.NewHTTPError(http.StatusBadRequest, types.PublicHTTPErrorTypeGeneric, "keyId parameter is required")
+		}
+
+		var body types.PutUpdateSecretPayload
+		if err := util.BindAndValidateBody(c, &body); err != nil {
 			return err
 		}
 
-		// 解码 base64 数据
-		if params.Payload.Data == nil {
+		if body.Data == nil {
 			return httperrors.NewHTTPError(http.StatusBadRequest, types.PublicHTTPErrorTypeGeneric, "data is required")
 		}
 
-		decodedData, err := base64.StdEncoding.DecodeString(params.Payload.Data.String())
+		decodedData, err := base64.StdEncoding.DecodeString(body.Data.String())
 		if err != nil {
 			return httperrors.NewHTTPError(http.StatusBadRequest, types.PublicHTTPErrorTypeGeneric, "Invalid base64 data format")
 		}
 
 		// 调用服务
-		err = s.SecretService.UpdateSecret(ctx, params.KeyID, decodedData)
+		err = s.SecretService.UpdateSecret(ctx, keyID, decodedData)
 		if err != nil {
 			log.Error().Err(err).Msg("Failed to update secret")
 			if errors.Is(err, secret.ErrSecretNotFound) {
@@ -56,14 +64,14 @@ func putUpdateSecretHandler(s *api.Server) echo.HandlerFunc {
 		}
 
 		// 获取更新后的 Secret 用于响应
-		updatedData, err := s.SecretService.GetSecret(ctx, params.KeyID)
+		updatedData, err := s.SecretService.GetSecret(ctx, keyID)
 		if err != nil {
 			log.Error().Err(err).Msg("Failed to get updated secret")
 			return httperrors.NewHTTPError(http.StatusInternalServerError, types.PublicHTTPErrorTypeGeneric, "Failed to get updated secret")
 		}
 
 		// 获取更新后的 Secret 元数据以获取 updated_at
-		secretData, err := s.MetadataStore.GetSecret(ctx, params.KeyID)
+		secretData, err := s.MetadataStore.GetSecret(ctx, keyID)
 		if err != nil {
 			log.Error().Err(err).Msg("Failed to get updated secret metadata")
 			// 即使获取失败，也返回数据（因为已经更新了）
@@ -72,7 +80,7 @@ func putUpdateSecretHandler(s *api.Server) echo.HandlerFunc {
 		// 转换响应
 		dataBase64 := strfmt.Base64(updatedData)
 		response := &types.GetSecretResponse{
-			KeyID: &params.KeyID,
+			KeyID: &keyID,
 			Data:  &dataBase64,
 		}
 		if secretData != nil && !secretData.UpdatedAt.IsZero() {

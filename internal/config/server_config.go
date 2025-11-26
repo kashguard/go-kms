@@ -4,6 +4,8 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -271,8 +273,8 @@ func DefaultServiceConfigFromEnv() Server {
 		KMS: KMS{
 			StorageBackend:      util.GetEnv("KMS_STORAGE_BACKEND", "postgresql"),
 			HSMType:             util.GetEnv("KMS_HSM_TYPE", "software"),
-			HSMLibrary:          util.GetEnv("KMS_HSM_LIBRARY", "/usr/lib/softhsm/libsofthsm2.so"),
-			HSMSlot:             util.GetEnvAsInt("KMS_HSM_SLOT", 0),
+			HSMLibrary:          getHSMLibraryPath(),
+			HSMSlot:             getHSMSlot(),
 			HSMPIN:              util.GetEnv("KMS_HSM_PIN", "1234"),
 			EnableAudit:         util.GetEnvAsBool("KMS_ENABLE_AUDIT", true),
 			EnablePolicy:        util.GetEnvAsBool("KMS_ENABLE_POLICY", true),
@@ -281,4 +283,48 @@ func DefaultServiceConfigFromEnv() Server {
 			EnableSecretService: util.GetEnvAsBool("KMS_ENABLE_SECRET_SERVICE", false),
 		},
 	}
+}
+
+// getHSMLibraryPath 获取 HSM 库路径
+// 优先使用环境变量，如果没有设置则尝试从文件读取（由 init-softhsm.sh 写入）
+// 最后使用默认路径
+func getHSMLibraryPath() string {
+	// 首先检查环境变量
+	if libPath := util.GetEnv("KMS_HSM_LIBRARY", ""); libPath != "" {
+		return libPath
+	}
+
+	// 尝试从文件读取（由 init-softhsm.sh 写入）
+	if libPathBytes, err := os.ReadFile("/tmp/kms_hsm_library"); err == nil {
+		if libPath := strings.TrimSpace(string(libPathBytes)); libPath != "" {
+			return libPath
+		}
+	}
+
+	// 使用默认路径
+	return "/usr/lib/softhsm/libsofthsm2.so"
+}
+
+// getHSMSlot 获取 HSM Slot
+// 优先使用环境变量（可能由 init-softhsm.sh 通过 export 设置），如果没有设置则尝试从文件读取
+// 最后使用默认值 0
+func getHSMSlot() int {
+	// 首先检查环境变量（docker-compose.yml 中的环境变量会被 init-softhsm.sh 的 export 覆盖）
+	if slotStr := util.GetEnv("KMS_HSM_SLOT", ""); slotStr != "" {
+		if slot, err := strconv.Atoi(slotStr); err == nil {
+			return slot
+		}
+	}
+
+	// 尝试从文件读取（由 init-softhsm.sh 写入，作为备用）
+	if slotBytes, err := os.ReadFile("/tmp/kms_hsm_slot"); err == nil {
+		if slotStr := strings.TrimSpace(string(slotBytes)); slotStr != "" {
+			if slot, err := strconv.Atoi(slotStr); err == nil {
+				return slot
+			}
+		}
+	}
+
+	// 使用默认值
+	return 0
 }

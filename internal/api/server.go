@@ -138,12 +138,44 @@ func NewServer(config config.Server) *Server {
 }
 
 func (s *Server) Ready() bool {
-	if err := util.IsStructInitialized(s); err != nil {
+	// 如果 Secret 服务未启用，允许 SecretService 为 nil
+	// 创建一个临时 Server 副本用于初始化检查，将 SecretService 设置为非 nil
+	checkServer := *s
+	if !s.Config.KMS.EnableSecretService && s.SecretService == nil {
+		// 创建一个空的实现来通过初始化检查
+		// 使用一个简单的占位符实现
+		checkServer.SecretService = &noopSecretService{}
+	}
+
+	if err := util.IsStructInitialized(&checkServer); err != nil {
 		log.Debug().Err(err).Msg("Server is not fully initialized")
 		return false
 	}
 
 	return true
+}
+
+// noopSecretService 是一个空的 SecretService 实现，用于在 Secret 服务未启用时通过初始化检查
+type noopSecretService struct{}
+
+func (n *noopSecretService) CreateSecret(ctx context.Context, keyID string, data []byte) (string, error) {
+	return "", errors.New("secret service is not enabled")
+}
+
+func (n *noopSecretService) GetSecret(ctx context.Context, keyID string) ([]byte, error) {
+	return nil, errors.New("secret service is not enabled")
+}
+
+func (n *noopSecretService) UpdateSecret(ctx context.Context, keyID string, data []byte) error {
+	return errors.New("secret service is not enabled")
+}
+
+func (n *noopSecretService) DeleteSecret(ctx context.Context, keyID string) error {
+	return errors.New("secret service is not enabled")
+}
+
+func (n *noopSecretService) SecretExists(ctx context.Context, keyID string) (bool, error) {
+	return false, errors.New("secret service is not enabled")
 }
 
 func (s *Server) Start() error {

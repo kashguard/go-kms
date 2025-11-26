@@ -3,6 +3,7 @@ package key
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -81,6 +82,7 @@ func (s *service) CreateKey(ctx context.Context, req *CreateKeyRequest) (*KeyMet
 
 	// 构建密钥规格
 	keySpec := s.buildKeySpec(req.KeyType, req.KeySpec)
+	s.prepareHSMAttributes(keySpec, keyID, 1, req.KeyType)
 
 	// 在 HSM 内生成密钥
 	hsmHandle, err := s.hsmAdapter.GenerateKey(ctx, keySpec)
@@ -105,18 +107,7 @@ func (s *service) CreateKey(ctx context.Context, req *CreateKeyRequest) (*KeyMet
 	}
 
 	// 转换 KeySpec 为 map
-	if req.KeySpec != nil {
-		keyMetadata.KeySpec = map[string]interface{}{
-			"algorithm": req.KeySpec.Algorithm,
-			"key_size":  req.KeySpec.KeySize,
-		}
-		if req.KeySpec.Curve != "" {
-			keyMetadata.KeySpec["curve"] = req.KeySpec.Curve
-		}
-		if req.KeySpec.Attributes != nil {
-			keyMetadata.KeySpec["attributes"] = req.KeySpec.Attributes
-		}
-	}
+	keyMetadata.KeySpec = s.buildKeySpecMetadata(keySpec)
 
 	if err := s.metadataStore.SaveKeyMetadata(ctx, keyMetadata); err != nil {
 		// 如果保存失败，尝试删除 HSM 中的密钥
@@ -349,6 +340,7 @@ func (s *service) RotateKey(ctx context.Context, keyID string) (*KeyMetadata, er
 
 	// 构建密钥规格
 	keySpec := s.buildKeySpecFromMetadata(keyMetadata)
+	s.prepareHSMAttributes(keySpec, keyID, newVersion, KeyType(keyMetadata.KeyType))
 
 	// 在 HSM 内生成新版本密钥
 	newHandle, err := s.hsmAdapter.GenerateKey(ctx, keySpec)
@@ -485,6 +477,59 @@ func (s *service) buildKeySpec(keyType KeyType, reqSpec *KeySpec) *hsm.KeySpec {
 	}
 
 	return spec
+}
+
+func (s *service) prepareHSMAttributes(spec *hsm.KeySpec, keyID string, version int, keyType KeyType) {
+	if spec.Attributes == nil {
+		spec.Attributes = make(map[string]string)
+	}
+
+	if _, ok := spec.Attributes["label"]; !ok {
+		spec.Attributes["label"] = fmt.Sprintf("%s-v%d", keyID, version)
+	}
+	if _, ok := spec.Attributes["class"]; !ok {
+		spec.Attributes["class"] = s.hsmClassForKeyType(keyType)
+	}
+}
+
+func (s *service) hsmClassForKeyType(keyType KeyType) string {
+	switch keyType {
+	case KeyTypeAES256:
+		return "secret"
+	default:
+		return "private"
+	}
+}
+
+func (s *service) buildKeySpecMetadata(spec *hsm.KeySpec) map[string]interface{} {
+	metadata := make(map[string]interface{})
+
+	if spec.Algorithm != "" {
+		metadata["algorithm"] = spec.Algorithm
+	}
+	if spec.KeySize != 0 {
+		metadata["key_size"] = spec.KeySize
+	}
+	if curve, ok := spec.Attributes["curve"]; ok {
+		metadata["curve"] = curve
+	}
+
+	attrs := make(map[string]string)
+	for k, v := range spec.Attributes {
+		if k == "label" || k == "class" {
+			continue
+		}
+		attrs[k] = v
+	}
+	if len(attrs) > 0 {
+		metadata["attributes"] = attrs
+	}
+
+	if len(metadata) == 0 {
+		return nil
+	}
+
+	return metadata
 }
 
 // buildKeySpecFromMetadata 从元数据构建密钥规格

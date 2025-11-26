@@ -9,7 +9,6 @@ import (
 	"github.com/kashguard/go-kms/internal/api/httperrors"
 	"github.com/kashguard/go-kms/internal/kms/secret"
 	"github.com/kashguard/go-kms/internal/types"
-	"github.com/kashguard/go-kms/internal/types/kms"
 	"github.com/kashguard/go-kms/internal/util"
 	"github.com/labstack/echo/v4"
 )
@@ -23,13 +22,18 @@ func getSecretHandler(s *api.Server) echo.HandlerFunc {
 		ctx := c.Request().Context()
 		log := util.LogFromContext(ctx)
 
-		params := kms.NewGetSecretRouteParams()
-		if err := params.BindRequest(c.Request(), nil); err != nil {
-			return err
+		// 检查 Secret 服务是否启用
+		if s.SecretService == nil {
+			return httperrors.NewHTTPError(http.StatusServiceUnavailable, types.PublicHTTPErrorTypeGeneric, "Secret service is not enabled")
+		}
+
+		keyID := c.Param("keyId")
+		if keyID == "" {
+			return httperrors.NewHTTPError(http.StatusBadRequest, types.PublicHTTPErrorTypeGeneric, "keyId parameter is required")
 		}
 
 		// 调用服务
-		data, err := s.SecretService.GetSecret(ctx, params.KeyID)
+		data, err := s.SecretService.GetSecret(ctx, keyID)
 		if err != nil {
 			log.Error().Err(err).Msg("Failed to get secret")
 			if errors.Is(err, secret.ErrSecretNotFound) {
@@ -45,7 +49,7 @@ func getSecretHandler(s *api.Server) echo.HandlerFunc {
 		}
 
 		// 获取 Secret 元数据以获取 updated_at
-		secretData, err := s.MetadataStore.GetSecret(ctx, params.KeyID)
+		secretData, err := s.MetadataStore.GetSecret(ctx, keyID)
 		if err != nil {
 			log.Error().Err(err).Msg("Failed to get secret metadata")
 			// 即使获取失败，也返回数据（因为已经解密了）
@@ -54,7 +58,7 @@ func getSecretHandler(s *api.Server) echo.HandlerFunc {
 		// 转换响应
 		dataBase64 := strfmt.Base64(data)
 		response := &types.GetSecretResponse{
-			KeyID: &params.KeyID,
+			KeyID: &keyID,
 			Data:  &dataBase64,
 		}
 		if secretData != nil && !secretData.UpdatedAt.IsZero() {
