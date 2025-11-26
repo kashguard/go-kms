@@ -1,6 +1,6 @@
 package hashing
 
-import "allaboutapps.dev/aw/go-starter/internal/util"
+import "github.com/kashguard/go-kms/internal/util"
 
 var (
 	// DefaultArgon2Params represents Argon2ID parameter recommendations in accordance with:

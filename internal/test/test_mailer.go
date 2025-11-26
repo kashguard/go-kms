@@ -3,10 +3,10 @@ package test
 import (
 	"testing"
 
-	"allaboutapps.dev/aw/go-starter/internal/config"
-	"allaboutapps.dev/aw/go-starter/internal/mailer"
-	"allaboutapps.dev/aw/go-starter/internal/mailer/transport"
 	"github.com/jordan-wright/email"
+	"github.com/kashguard/go-kms/internal/config"
+	"github.com/kashguard/go-kms/internal/mailer"
+	"github.com/kashguard/go-kms/internal/mailer/transport"
 )
 
 const (

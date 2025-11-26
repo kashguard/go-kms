@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"allaboutapps.dev/aw/go-starter/internal/mailer/transport"
-	"allaboutapps.dev/aw/go-starter/internal/push/provider"
-	"allaboutapps.dev/aw/go-starter/internal/util"
+	"github.com/kashguard/go-kms/internal/mailer/transport"
+	"github.com/kashguard/go-kms/internal/push/provider"
+	"github.com/kashguard/go-kms/internal/util"
 	"github.com/rs/zerolog"
 	"golang.org/x/text/language"
 )
@@ -101,6 +101,19 @@ type I18n struct {
 	BundleDirAbs    string
 }
 
+type KMS struct {
+	StorageBackend      string
+	HSMType             string
+	HSMLibrary          string
+	HSMSlot             int
+	HSMPIN              string
+	EnableAudit         bool
+	EnablePolicy        bool
+	SecretKMSKeyID      string // 用于加密 Secret 的全局 KMS 密钥ID
+	SecretKMSKeyAlias   string // 密钥别名（可选）
+	EnableSecretService bool   // 是否启用 Secret 服务
+}
+
 type Server struct {
 	Database   Database
 	Echo       EchoServer
@@ -115,6 +128,7 @@ type Server struct {
 	Push       PushService
 	FCMConfig  provider.FCMConfig
 	I18n       I18n
+	KMS        KMS
 }
 
 // DefaultServiceConfigFromEnv returns the server config as parsed from environment variables
@@ -253,6 +267,18 @@ func DefaultServiceConfigFromEnv() Server {
 		I18n: I18n{
 			DefaultLanguage: util.GetEnvAsLanguageTag("SERVER_I18N_DEFAULT_LANGUAGE", language.English),
 			BundleDirAbs:    util.GetEnv("SERVER_I18N_BUNDLE_DIR_ABS", filepath.Join(util.GetProjectRootDir(), "/web/i18n")), // /app/web/i18n
+		},
+		KMS: KMS{
+			StorageBackend:      util.GetEnv("KMS_STORAGE_BACKEND", "postgresql"),
+			HSMType:             util.GetEnv("KMS_HSM_TYPE", "software"),
+			HSMLibrary:          util.GetEnv("KMS_HSM_LIBRARY", "/usr/lib/softhsm/libsofthsm2.so"),
+			HSMSlot:             util.GetEnvAsInt("KMS_HSM_SLOT", 0),
+			HSMPIN:              util.GetEnv("KMS_HSM_PIN", "1234"),
+			EnableAudit:         util.GetEnvAsBool("KMS_ENABLE_AUDIT", true),
+			EnablePolicy:        util.GetEnvAsBool("KMS_ENABLE_POLICY", true),
+			SecretKMSKeyID:      util.GetEnv("KMS_SECRET_KEY_ID", ""),
+			SecretKMSKeyAlias:   util.GetEnv("KMS_SECRET_KEY_ALIAS", "secret-storage-key"),
+			EnableSecretService: util.GetEnvAsBool("KMS_ENABLE_SECRET_SERVICE", false),
 		},
 	}
 }

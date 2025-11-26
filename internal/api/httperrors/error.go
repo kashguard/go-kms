@@ -6,8 +6,8 @@ import (
 	"sort"
 	"strings"
 
-	"allaboutapps.dev/aw/go-starter/internal/types"
 	"github.com/go-openapi/swag"
+	"github.com/kashguard/go-kms/internal/types"
 	"github.com/labstack/echo/v4"
 )
 

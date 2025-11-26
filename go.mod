@@ -1,4 +1,4 @@
-module allaboutapps.dev/aw/go-starter
+module github.com/kashguard/go-kms
 
 go 1.24.0
 
@@ -23,6 +23,7 @@ require (
 	github.com/kat-co/vala v0.0.0-20170210184112-42e1d8b61f12
 	github.com/labstack/echo/v4 v4.13.4
 	github.com/lib/pq v1.10.9
+	github.com/miekg/pkcs11 v1.1.1
 	github.com/nicksnyder/go-i18n/v2 v2.4.1
 	github.com/pkg/errors v0.9.1
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2

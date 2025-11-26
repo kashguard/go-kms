@@ -3,7 +3,7 @@ package httperrors
 import (
 	"net/http"
 
-	"allaboutapps.dev/aw/go-starter/internal/types"
+	"github.com/kashguard/go-kms/internal/types"
 )
 
 var (

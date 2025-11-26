@@ -6,9 +6,9 @@ import (
 	"errors"
 	"fmt"
 
-	"allaboutapps.dev/aw/go-starter/internal/data/dto"
-	"allaboutapps.dev/aw/go-starter/internal/models"
-	"allaboutapps.dev/aw/go-starter/internal/util"
+	"github.com/kashguard/go-kms/internal/data/dto"
+	"github.com/kashguard/go-kms/internal/models"
+	"github.com/kashguard/go-kms/internal/util"
 )
 
 type ProviderType string

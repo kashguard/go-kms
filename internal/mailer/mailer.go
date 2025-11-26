@@ -9,11 +9,11 @@ import (
 	"os"
 	"path/filepath"
 
-	"allaboutapps.dev/aw/go-starter/internal/config"
-	"allaboutapps.dev/aw/go-starter/internal/data/dto"
-	"allaboutapps.dev/aw/go-starter/internal/mailer/transport"
-	"allaboutapps.dev/aw/go-starter/internal/util"
 	"github.com/jordan-wright/email"
+	"github.com/kashguard/go-kms/internal/config"
+	"github.com/kashguard/go-kms/internal/data/dto"
+	"github.com/kashguard/go-kms/internal/mailer/transport"
+	"github.com/kashguard/go-kms/internal/util"
 	"github.com/rs/zerolog/log"
 )
 

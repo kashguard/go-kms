@@ -5,11 +5,11 @@ import (
 	"database/sql"
 	"fmt"
 
-	"allaboutapps.dev/aw/go-starter/internal/api"
-	"allaboutapps.dev/aw/go-starter/internal/api/handlers/common"
-	"allaboutapps.dev/aw/go-starter/internal/config"
-	"allaboutapps.dev/aw/go-starter/internal/util"
-	"allaboutapps.dev/aw/go-starter/internal/util/command"
+	"github.com/kashguard/go-kms/internal/api"
+	"github.com/kashguard/go-kms/internal/api/handlers/common"
+	"github.com/kashguard/go-kms/internal/config"
+	"github.com/kashguard/go-kms/internal/util"
+	"github.com/kashguard/go-kms/internal/util/command"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )

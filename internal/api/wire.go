@@ -6,11 +6,11 @@ import (
 	"database/sql"
 	"testing"
 
-	"allaboutapps.dev/aw/go-starter/internal/auth"
-	"allaboutapps.dev/aw/go-starter/internal/config"
-	"allaboutapps.dev/aw/go-starter/internal/data/local"
-	"allaboutapps.dev/aw/go-starter/internal/metrics"
 	"github.com/google/wire"
+	"github.com/kashguard/go-kms/internal/auth"
+	"github.com/kashguard/go-kms/internal/config"
+	"github.com/kashguard/go-kms/internal/data/local"
+	"github.com/kashguard/go-kms/internal/metrics"
 )
 
 // INJECTORS - https://github.com/google/wire/blob/main/docs/guide.md#injectors
@@ -25,6 +25,18 @@ var serviceSet = wire.NewSet(
 	local.NewService,
 	metrics.New,
 	NewClock,
+	kmsServiceSet,
+)
+
+var kmsServiceSet = wire.NewSet(
+	NewHSMAdapter,
+	NewMetadataStore,
+	NewPolicyEngine,
+	NewAuditLogger,
+	NewKeyService,
+	NewEncryptionService,
+	NewSignService,
+	NewSecretService,
 )
 
 var authServiceSet = wire.NewSet(

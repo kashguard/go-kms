@@ -8,10 +8,10 @@ import (
 	"testing"
 	"time"
 
-	"allaboutapps.dev/aw/go-starter/internal/test"
-	"allaboutapps.dev/aw/go-starter/internal/util"
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/strfmt/conv"
+	"github.com/kashguard/go-kms/internal/test"
+	"github.com/kashguard/go-kms/internal/util"
 	"github.com/stretchr/testify/require"
 )
 

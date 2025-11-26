@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"net/http"
 
-	"allaboutapps.dev/aw/go-starter/internal/api/httperrors"
-	"allaboutapps.dev/aw/go-starter/internal/config"
-	"allaboutapps.dev/aw/go-starter/internal/types"
-	"allaboutapps.dev/aw/go-starter/internal/util"
 	"github.com/go-openapi/swag"
+	"github.com/kashguard/go-kms/internal/api/httperrors"
+	"github.com/kashguard/go-kms/internal/config"
+	"github.com/kashguard/go-kms/internal/types"
+	"github.com/kashguard/go-kms/internal/util"
 	"github.com/labstack/echo/v4"
 	"github.com/timewasted/go-accept-headers"
 )

@@ -5,8 +5,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"allaboutapps.dev/aw/go-starter/internal/api/middleware"
-	"allaboutapps.dev/aw/go-starter/internal/util"
+	"github.com/kashguard/go-kms/internal/api/middleware"
+	"github.com/kashguard/go-kms/internal/util"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

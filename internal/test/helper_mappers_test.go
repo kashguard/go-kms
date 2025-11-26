@@ -3,8 +3,8 @@ package test_test
 import (
 	"testing"
 
-	"allaboutapps.dev/aw/go-starter/internal/test"
 	"github.com/go-openapi/swag"
+	"github.com/kashguard/go-kms/internal/test"
 	"github.com/stretchr/testify/assert"
 )
 

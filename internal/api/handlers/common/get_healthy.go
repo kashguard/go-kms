@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strings"
 
-	"allaboutapps.dev/aw/go-starter/internal/api"
+	"github.com/kashguard/go-kms/internal/api"
 	"github.com/labstack/echo/v4"
 )
 

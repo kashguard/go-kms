@@ -7,12 +7,12 @@
 package api
 
 import (
-	"allaboutapps.dev/aw/go-starter/internal/auth"
-	"allaboutapps.dev/aw/go-starter/internal/config"
-	"allaboutapps.dev/aw/go-starter/internal/data/local"
-	"allaboutapps.dev/aw/go-starter/internal/metrics"
 	"database/sql"
 	"github.com/google/wire"
+	"github.com/kashguard/go-kms/internal/auth"
+	"github.com/kashguard/go-kms/internal/config"
+	"github.com/kashguard/go-kms/internal/data/local"
+	"github.com/kashguard/go-kms/internal/metrics"
 	"testing"
 )
 
@@ -48,7 +48,33 @@ func InitNewServer(server config.Server) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	apiServer := newServerWithComponents(server, db, mailer, service, i18nService, clock, authService, localService, metricsService)
+	adapter, err := NewHSMAdapter(server, db)
+	if err != nil {
+		return nil, err
+	}
+	metadataStore, err := NewMetadataStore(server, db)
+	if err != nil {
+		return nil, err
+	}
+	engine := NewPolicyEngine(metadataStore)
+	logger := NewAuditLogger(metadataStore)
+	keyService, err := NewKeyService(db, adapter, metadataStore, engine, logger)
+	if err != nil {
+		return nil, err
+	}
+	encryptionService, err := NewEncryptionService(keyService, adapter, metadataStore, engine, logger)
+	if err != nil {
+		return nil, err
+	}
+	signService, err := NewSignService(keyService, adapter, metadataStore, engine, logger)
+	if err != nil {
+		return nil, err
+	}
+	secretService, err := NewSecretService(encryptionService, keyService, metadataStore, engine, logger, server)
+	if err != nil {
+		return nil, err
+	}
+	apiServer := newServerWithComponents(server, db, mailer, service, i18nService, clock, authService, localService, metricsService, keyService, encryptionService, signService, secretService, engine, logger, metadataStore)
 	return apiServer, nil
 }
 
@@ -74,7 +100,33 @@ func InitNewServerWithDB(server config.Server, db *sql.DB, t ...*testing.T) (*Se
 	if err != nil {
 		return nil, err
 	}
-	apiServer := newServerWithComponents(server, db, mailer, service, i18nService, clock, authService, localService, metricsService)
+	adapter, err := NewHSMAdapter(server, db)
+	if err != nil {
+		return nil, err
+	}
+	metadataStore, err := NewMetadataStore(server, db)
+	if err != nil {
+		return nil, err
+	}
+	engine := NewPolicyEngine(metadataStore)
+	logger := NewAuditLogger(metadataStore)
+	keyService, err := NewKeyService(db, adapter, metadataStore, engine, logger)
+	if err != nil {
+		return nil, err
+	}
+	encryptionService, err := NewEncryptionService(keyService, adapter, metadataStore, engine, logger)
+	if err != nil {
+		return nil, err
+	}
+	signService, err := NewSignService(keyService, adapter, metadataStore, engine, logger)
+	if err != nil {
+		return nil, err
+	}
+	secretService, err := NewSecretService(encryptionService, keyService, metadataStore, engine, logger, server)
+	if err != nil {
+		return nil, err
+	}
+	apiServer := newServerWithComponents(server, db, mailer, service, i18nService, clock, authService, localService, metricsService, keyService, encryptionService, signService, secretService, engine, logger, metadataStore)
 	return apiServer, nil
 }
 
@@ -87,6 +139,18 @@ var serviceSet = wire.NewSet(
 	NewMailer,
 	NewI18N,
 	authServiceSet, local.NewService, metrics.New, NewClock,
+	kmsServiceSet,
+)
+
+var kmsServiceSet = wire.NewSet(
+	NewHSMAdapter,
+	NewMetadataStore,
+	NewPolicyEngine,
+	NewAuditLogger,
+	NewKeyService,
+	NewEncryptionService,
+	NewSignService,
+	NewSecretService,
 )
 
 var authServiceSet = wire.NewSet(

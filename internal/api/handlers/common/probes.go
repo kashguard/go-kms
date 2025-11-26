@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"allaboutapps.dev/aw/go-starter/internal/util"
+	"github.com/kashguard/go-kms/internal/util"
 	"golang.org/x/sys/unix"
 )
 

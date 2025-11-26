@@ -1,0 +1,646 @@
+swagger: "2.0"
+info:
+  title: github.com/kashguard/go-kms
+  version: 0.1.0
+paths: {}
+definitions:
+  # 密钥管理 API
+  PostCreateKeyPayload:
+    type: object
+    required:
+      - key_type
+    properties:
+      alias:
+        type: string
+        description: 密钥别名
+        example: "my-encryption-key"
+      description:
+        type: string
+        description: 密钥描述
+        example: "用于生产环境数据加密"
+      key_type:
+        type: string
+        enum:
+          - ECC_SECP256K1
+          - ECC_P256
+          - ED25519
+          - AES_256
+        description: 密钥类型
+        example: AES_256
+      key_spec:
+        type: object
+        properties:
+          algorithm:
+            type: string
+            example: "AES"
+          key_size:
+            type: integer
+            example: 256
+          curve:
+            type: string
+            example: "P-256"
+          attributes:
+            type: object
+            additionalProperties:
+              type: string
+      policy_id:
+        type: string
+        description: 策略ID
+        example: "policy-123"
+      tags:
+        type: object
+        additionalProperties:
+          type: string
+        description: 标签
+        example:
+          environment: "production"
+          team: "backend"
+  
+  CreateKeyResponse:
+    type: object
+    required:
+      - key_id
+      - key_type
+      - key_state
+    properties:
+      key_id:
+        type: string
+        description: 密钥ID
+        example: "key-1234567890abcdef"
+      alias:
+        type: string
+        description: 密钥别名
+        example: "my-encryption-key"
+      description:
+        type: string
+        description: 密钥描述
+      key_type:
+        type: string
+        example: "AES_256"
+      key_state:
+        type: string
+        enum:
+          - Enabled
+          - Disabled
+          - PendingDeletion
+          - Deleted
+        example: "Enabled"
+      created_at:
+        type: string
+        format: date-time
+        example: "2025-11-26T10:00:00Z"
+      updated_at:
+        type: string
+        format: date-time
+        example: "2025-11-26T10:00:00Z"
+      tags:
+        type: object
+        additionalProperties:
+          type: string
+  
+  GetKeyResponse:
+    type: object
+    required:
+      - key_id
+      - key_type
+      - key_state
+    properties:
+      key_id:
+        type: string
+        example: "key-1234567890abcdef"
+      alias:
+        type: string
+      description:
+        type: string
+      key_type:
+        type: string
+        example: "AES_256"
+      key_state:
+        type: string
+        example: "Enabled"
+      latest_version:
+        type: integer
+        example: 1
+      created_at:
+        type: string
+        format: date-time
+      updated_at:
+        type: string
+        format: date-time
+      tags:
+        type: object
+        additionalProperties:
+          type: string
+  
+  PutUpdateKeyPayload:
+    type: object
+    properties:
+      description:
+        type: string
+        description: 密钥描述
+      policy_id:
+        type: string
+        description: 策略ID
+      tags:
+        type: object
+        additionalProperties:
+          type: string
+  
+  ListKeysResponse:
+    type: object
+    required:
+      - keys
+    properties:
+      keys:
+        type: array
+        items:
+          $ref: "#/definitions/GetKeyResponse"
+      total:
+        type: integer
+        example: 10
+  
+  # 加密解密 API
+  PostEncryptPayload:
+    type: object
+    required:
+      - key_id
+      - plaintext
+    properties:
+      key_id:
+        type: string
+        description: 密钥ID
+        example: "key-1234567890abcdef"
+      plaintext:
+        type: string
+        format: byte
+        description: 明文数据（base64编码）
+        example: "SGVsbG8gV29ybGQ="
+      encryption_context:
+        type: object
+        additionalProperties:
+          type: string
+        description: 加密上下文（可选）
+        example:
+          purpose: "database-encryption"
+          environment: "production"
+  
+  PostEncryptResponse:
+    type: object
+    required:
+      - ciphertext_blob
+      - key_id
+    properties:
+      ciphertext_blob:
+        type: string
+        format: byte
+        description: 密文数据（base64编码）
+        example: "eyJrZXlfaWQiOiJrZXktMTIzNDU2Nzg5MGFiY2RlZiIsInZlcnNpb24iOjEsImNpcGhlcnRleHQiOiIuLi4ifQ=="
+      key_id:
+        type: string
+        example: "key-1234567890abcdef"
+      key_version:
+        type: integer
+        example: 1
+  
+  PostDecryptPayload:
+    type: object
+    required:
+      - ciphertext_blob
+    properties:
+      ciphertext_blob:
+        type: string
+        format: byte
+        description: 密文数据（base64编码）
+        example: "eyJrZXlfaWQiOiJrZXktMTIzNDU2Nzg5MGFiY2RlZiIsInZlcnNpb24iOjEsImNpcGhlcnRleHQiOiIuLi4ifQ=="
+      encryption_context:
+        type: object
+        additionalProperties:
+          type: string
+        description: 加密上下文（必须与加密时一致）
+  
+  PostDecryptResponse:
+    type: object
+    required:
+      - plaintext
+      - key_id
+    properties:
+      plaintext:
+        type: string
+        format: byte
+        description: 明文数据（base64编码）
+        example: "SGVsbG8gV29ybGQ="
+      key_id:
+        type: string
+        example: "key-1234567890abcdef"
+      key_version:
+        type: integer
+        example: 1
+  
+  PostGenerateDataKeyPayload:
+    type: object
+    required:
+      - key_id
+    properties:
+      key_id:
+        type: string
+        description: 密钥ID（KEK）
+        example: "key-1234567890abcdef"
+      key_spec:
+        type: string
+        enum:
+          - AES_256
+        description: 数据密钥规格
+        example: "AES_256"
+      number_of_bytes:
+        type: integer
+        description: 数据密钥长度（字节）
+        example: 32
+      encryption_context:
+        type: object
+        additionalProperties:
+          type: string
+        description: 加密上下文（可选）
+      return_plaintext:
+        type: boolean
+        description: 是否返回明文数据密钥
+        default: true
+        example: true
+  
+  PostGenerateDataKeyResponse:
+    type: object
+    required:
+      - ciphertext_blob
+      - key_id
+    properties:
+      plaintext:
+        type: string
+        format: byte
+        description: 明文数据密钥（base64编码，仅当return_plaintext=true时返回）
+        example: "SGVsbG8gV29ybGQ="
+      ciphertext_blob:
+        type: string
+        format: byte
+        description: 加密的数据密钥（base64编码）
+        example: "eyJrZXlfaWQiOiJrZXktMTIzNDU2Nzg5MGFiY2RlZiIsInZlcnNpb24iOjEsImNpcGhlcnRleHQiOiIuLi4ifQ=="
+      key_id:
+        type: string
+        example: "key-1234567890abcdef"
+  
+  # 签名验证 API
+  PostSignPayload:
+    type: object
+    required:
+      - key_id
+      - message
+      - algorithm
+    properties:
+      key_id:
+        type: string
+        description: 密钥ID
+        example: "key-1234567890abcdef"
+      message:
+        type: string
+        format: byte
+        description: 消息数据（base64编码）
+        example: "SGVsbG8gV29ybGQ="
+      algorithm:
+        type: string
+        enum:
+          - ECDSA_SHA256
+          - ECDSA_SHA384
+          - ECDSA_SHA512
+          - ED25519
+        description: 签名算法
+        example: "ECDSA_SHA256"
+      mode:
+        type: string
+        enum:
+          - RAW
+          - DIGEST
+        description: 签名模式（RAW=原始数据，DIGEST=消息摘要）
+        default: DIGEST
+        example: "DIGEST"
+  
+  PostSignResponse:
+    type: object
+    required:
+      - signature
+      - key_id
+    properties:
+      signature:
+        type: string
+        format: byte
+        description: 签名数据（base64编码）
+        example: "MEUCIQDxHqXjF3Z8K9L2M1N4O5P6Q7R8S9T0U1V2W3X4Y5Z6A7B8C9D0E1F2G3H4I5J6K7L8M9N0O1P2Q3R4S5T6U7V8W9X0Y1Z2A3B4C5D6E7F8G9H0I1J2K3L4M5N6O7P8Q9R0S1T2U3V4W5X6Y7Z8A9B0C1D2E3F4G5H6I7J8K9L0M1N2O3P4Q5R6S7T8U9V0W1X2Y3Z4A5B6C7D8E9F0G1H2I3J4K5L6M7N8O9P0Q1R2S3T4U5V6W7X8Y9Z0"
+      key_id:
+        type: string
+        example: "key-1234567890abcdef"
+      key_version:
+        type: integer
+        example: 1
+      algorithm:
+        type: string
+        example: "ECDSA_SHA256"
+  
+  PostVerifyPayload:
+    type: object
+    required:
+      - key_id
+      - message
+      - signature
+      - algorithm
+    properties:
+      key_id:
+        type: string
+        description: 密钥ID
+        example: "key-1234567890abcdef"
+      message:
+        type: string
+        format: byte
+        description: 消息数据（base64编码）
+        example: "SGVsbG8gV29ybGQ="
+      signature:
+        type: string
+        format: byte
+        description: 签名数据（base64编码）
+        example: "MEUCIQDxHqXjF3Z8K9L2M1N4O5P6Q7R8S9T0U1V2W3X4Y5Z6A7B8C9D0E1F2G3H4I5J6K7L8M9N0O1P2Q3R4S5T6U7V8W9X0Y1Z2A3B4C5D6E7F8G9H0I1J2K3L4M5N6O7P8Q9R0S1T2U3V4W5X6Y7Z8A9B0C1D2E3F4G5H6I7J8K9L0M1N2O3P4Q5R6S7T8U9V0W1X2Y3Z4A5B6C7D8E9F0G1H2I3J4K5L6M7N8O9P0Q1R2S3T4U5V6W7X8Y9Z0"
+      algorithm:
+        type: string
+        enum:
+          - ECDSA_SHA256
+          - ECDSA_SHA384
+          - ECDSA_SHA512
+          - ED25519
+        description: 签名算法
+        example: "ECDSA_SHA256"
+      mode:
+        type: string
+        enum:
+          - RAW
+          - DIGEST
+        description: 签名模式
+        default: DIGEST
+        example: "DIGEST"
+  
+  PostVerifyResponse:
+    type: object
+    required:
+      - valid
+      - key_id
+    properties:
+      valid:
+        type: boolean
+        description: 签名是否有效
+        example: true
+      key_id:
+        type: string
+        example: "key-1234567890abcdef"
+      key_version:
+        type: integer
+        example: 1
+  
+  # 策略管理 API
+  PostCreatePolicyPayload:
+    type: object
+    required:
+      - policy_id
+      - policy_document
+    properties:
+      policy_id:
+        type: string
+        description: 策略ID
+        example: "policy-1234567890abcdef"
+      description:
+        type: string
+        description: 策略描述
+        example: "允许创建和使用密钥的策略"
+      policy_document:
+        type: object
+        description: 策略文档（JSON格式）
+        example:
+          statements:
+            - effect: "Allow"
+              actions:
+                - "create_key"
+                - "encrypt"
+                - "decrypt"
+              resources:
+                - "*"
+  
+  CreatePolicyResponse:
+    type: object
+    required:
+      - policy_id
+    properties:
+      policy_id:
+        type: string
+        example: "policy-1234567890abcdef"
+      description:
+        type: string
+      created_at:
+        type: string
+        format: date-time
+        example: "2025-11-26T10:00:00Z"
+      updated_at:
+        type: string
+        format: date-time
+        example: "2025-11-26T10:00:00Z"
+  
+  GetPolicyResponse:
+    type: object
+    required:
+      - policy_id
+      - policy_document
+    properties:
+      policy_id:
+        type: string
+        example: "policy-1234567890abcdef"
+      description:
+        type: string
+      policy_document:
+        type: object
+        description: 策略文档（JSON格式）
+      created_at:
+        type: string
+        format: date-time
+      updated_at:
+        type: string
+        format: date-time
+  
+  PutUpdatePolicyPayload:
+    type: object
+    properties:
+      description:
+        type: string
+        description: 策略描述
+      policy_document:
+        type: object
+        description: 策略文档（JSON格式）
+  
+  ListPoliciesResponse:
+    type: object
+    required:
+      - policies
+    properties:
+      policies:
+        type: array
+        items:
+          $ref: "#/definitions/GetPolicyResponse"
+      total:
+        type: integer
+        example: 5
+  
+  # 审计日志 API
+  GetAuditLogsParams:
+    type: object
+    properties:
+      start_time:
+        type: string
+        format: date-time
+        description: 开始时间
+        example: "2025-11-26T00:00:00Z"
+      end_time:
+        type: string
+        format: date-time
+        description: 结束时间
+        example: "2025-11-26T23:59:59Z"
+      key_id:
+        type: string
+        description: 密钥ID过滤
+        example: "key-1234567890abcdef"
+      user_id:
+        type: string
+        description: 用户ID过滤
+      event_type:
+        type: string
+        description: 事件类型过滤
+        example: "KeyCreated"
+      operation:
+        type: string
+        description: 操作类型过滤
+        example: "create_key"
+      result:
+        type: string
+        description: 结果过滤
+        enum:
+          - Success
+          - Failed
+        example: "Success"
+      limit:
+        type: integer
+        description: 返回数量限制
+        default: 100
+        example: 100
+      offset:
+        type: integer
+        description: 偏移量
+        default: 0
+        example: 0
+  
+  GetAuditLogsResponse:
+    type: object
+    required:
+      - events
+    properties:
+      events:
+        type: array
+        items:
+          type: object
+          required:
+            - timestamp
+            - event_type
+            - operation
+            - result
+          properties:
+            timestamp:
+              type: string
+              format: date-time
+              example: "2025-11-26T10:00:00Z"
+            event_type:
+              type: string
+              example: "KeyCreated"
+            user_id:
+              type: string
+              example: "user-123"
+            key_id:
+              type: string
+              example: "key-1234567890abcdef"
+            operation:
+              type: string
+              example: "create_key"
+            result:
+              type: string
+              enum:
+                - Success
+                - Failed
+              example: "Success"
+            details:
+              type: object
+              additionalProperties: true
+            ip_address:
+              type: string
+              example: "192.168.1.1"
+      total:
+        type: integer
+        example: 100
+  
+  # Secret 存储 API
+  PostCreateSecretPayload:
+    type: object
+    required:
+      - key_id
+      - data
+    properties:
+      key_id:
+        type: string
+        description: Secret 标识符
+        example: "wallet-keystore-00000000-0000-0000-0000-000000000001"
+      data:
+        type: string
+        format: byte
+        description: 要存储的数据（base64编码）
+        example: "eyJ2ZXJzaW9uIjozLCJpZCI6InV1aWQiLCJjcnlwdG8iOnsiY2lwaGVydGV4dCI6ImVuY3J5cHRlZF9tbmVtb25pY19oZXgiLCJjaXBoZXJwYXJhbXMiOnsiaXYiOiJpdl9oZXgifSwiY2lwaGVyIjoiYWVzLTEyOC1jdHIiLCJrZGYiOiJzY3J5cHQiLCJrZGZwYXJhbXMiOnsiZGtsZW4iOjMyLCJzYWx0Ijoic2FsdF9oZXgiLCJuIjoyNjIxNDQsInIiOjgsInAiOjF9LCJtYWMiOiJtYWNfaGV4In19fQ=="
+  
+  CreateSecretResponse:
+    type: object
+    required:
+      - key_id
+    properties:
+      key_id:
+        type: string
+        example: "wallet-keystore-00000000-0000-0000-0000-000000000001"
+      created_at:
+        type: string
+        format: date-time
+        example: "2025-11-26T10:00:00Z"
+  
+  GetSecretResponse:
+    type: object
+    required:
+      - key_id
+      - data
+    properties:
+      key_id:
+        type: string
+        example: "wallet-keystore-00000000-0000-0000-0000-000000000001"
+      data:
+        type: string
+        format: byte
+        description: 解密后的数据（base64编码）
+        example: "eyJ2ZXJzaW9uIjozLCJpZCI6InV1aWQiLCJjcnlwdG8iOnsiY2lwaGVydGV4dCI6ImVuY3J5cHRlZF9tbmVtb25pY19oZXgiLCJjaXBoZXJwYXJhbXMiOnsiaXYiOiJpdl9oZXgifSwiY2lwaGVyIjoiYWVzLTEyOC1jdHIiLCJrZGYiOiJzY3J5cHQiLCJrZGZwYXJhbXMiOnsiZGtsZW4iOjMyLCJzYWx0Ijoic2FsdF9oZXgiLCJuIjoyNjIxNDQsInIiOjgsInAiOjF9LCJtYWMiOiJtYWNfaGV4In19fQ=="
+      updated_at:
+        type: string
+        format: date-time
+        example: "2025-11-26T10:00:00Z"
+  
+  PutUpdateSecretPayload:
+    type: object
+    required:
+      - data
+    properties:
+      data:
+        type: string
+        format: byte
+        description: 要更新的数据（base64编码）
+        example: "eyJ2ZXJzaW9uIjozLCJpZCI6InV1aWQiLCJjcnlwdG8iOnsiY2lwaGVydGV4dCI6ImVuY3J5cHRlZF9tbmVtb25pY19oZXgiLCJjaXBoZXJwYXJhbXMiOnsiaXYiOiJpdl9oZXgifSwiY2lwaGVyIjoiYWVzLTEyOC1jdHIiLCJrZGYiOiJzY3J5cHQiLCJrZGZwYXJhbXMiOnsiZGtsZW4iOjMyLCJzYWx0Ijoic2FsdF9oZXgiLCJuIjoyNjIxNDQsInIiOjgsInAiOjF9LCJtYWMiOiJtYWNfaGV4In19fQ=="
+

@@ -8,15 +8,15 @@ import (
 	"regexp"
 	"testing"
 
-	"allaboutapps.dev/aw/go-starter/internal/api"
-	"allaboutapps.dev/aw/go-starter/internal/test"
-	"allaboutapps.dev/aw/go-starter/internal/test/fixtures"
-	"allaboutapps.dev/aw/go-starter/internal/test/mocks"
-	"allaboutapps.dev/aw/go-starter/internal/util"
+	"github.com/kashguard/go-kms/internal/api"
+	"github.com/kashguard/go-kms/internal/test"
+	"github.com/kashguard/go-kms/internal/test/fixtures"
+	"github.com/kashguard/go-kms/internal/test/mocks"
+	"github.com/kashguard/go-kms/internal/util"
 
-	apitypes "allaboutapps.dev/aw/go-starter/internal/types"
 	"github.com/aarondl/sqlboiler/v4/types"
 	"github.com/go-openapi/swag"
+	apitypes "github.com/kashguard/go-kms/internal/types"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )

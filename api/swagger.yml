@@ -6,7 +6,7 @@ produces:
 swagger: "2.0"
 info:
   description: API documentation
-  title: allaboutapps.dev/aw/go-starter
+  title: github.com/kashguard/go-kms
   version: 0.1.0
 paths:
   /-/healthy:
@@ -375,6 +375,775 @@ paths:
           description: GetUserInfoResponse
           schema:
             $ref: '#/definitions/getUserInfoResponse'
+  /api/v1/kms/audit-logs:
+    get:
+      security:
+      - Bearer: []
+      description: Query audit logs
+      tags:
+      - kms
+      summary: Get audit logs
+      operationId: GetAuditLogsRoute
+      parameters:
+      - type: string
+        format: date-time
+        description: Start time
+        name: start_time
+        in: query
+      - type: string
+        format: date-time
+        description: End time
+        name: end_time
+        in: query
+      - type: string
+        description: Filter by key ID
+        name: key_id
+        in: query
+      - type: string
+        description: Filter by user ID
+        name: user_id
+        in: query
+      - type: string
+        description: Filter by event type
+        name: event_type
+        in: query
+      - type: string
+        description: Filter by operation
+        name: operation
+        in: query
+      - enum:
+        - Success
+        - Failed
+        type: string
+        description: Filter by result
+        name: result
+        in: query
+      - type: integer
+        default: 100
+        description: Maximum number of results
+        name: limit
+        in: query
+      - type: integer
+        default: 0
+        description: Offset for pagination
+        name: offset
+        in: query
+      responses:
+        "200":
+          description: GetAuditLogsResponse
+          schema:
+            $ref: '#/definitions/getAuditLogsResponse'
+        "401":
+          description: PublicHTTPError
+          schema:
+            $ref: '#/definitions/publicHttpError'
+  /api/v1/kms/decrypt:
+    post:
+      security:
+      - Bearer: []
+      description: Decrypt data using a KMS key
+      tags:
+      - kms
+      summary: Decrypt data
+      operationId: PostDecryptRoute
+      parameters:
+      - name: Payload
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/postDecryptPayload'
+      responses:
+        "200":
+          description: PostDecryptResponse
+          schema:
+            $ref: '#/definitions/postDecryptResponse'
+        "400":
+          description: Invalid ciphertext
+          schema:
+            $ref: '#/definitions/publicHttpError'
+        "401":
+          description: PublicHTTPError
+          schema:
+            $ref: '#/definitions/publicHttpError'
+        "404":
+          description: Key not found
+          schema:
+            $ref: '#/definitions/publicHttpError'
+  /api/v1/kms/encrypt:
+    post:
+      security:
+      - Bearer: []
+      description: Encrypt data using a KMS key
+      tags:
+      - kms
+      summary: Encrypt data
+      operationId: PostEncryptRoute
+      parameters:
+      - name: Payload
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/postEncryptPayload'
+      responses:
+        "200":
+          description: PostEncryptResponse
+          schema:
+            $ref: '#/definitions/postEncryptResponse'
+        "400":
+          description: PublicHTTPValidationError
+          schema:
+            $ref: '#/definitions/publicHttpValidationError'
+        "401":
+          description: PublicHTTPError
+          schema:
+            $ref: '#/definitions/publicHttpError'
+        "403":
+          description: Key is disabled
+          schema:
+            $ref: '#/definitions/publicHttpError'
+        "404":
+          description: Key not found
+          schema:
+            $ref: '#/definitions/publicHttpError'
+  /api/v1/kms/generate-data-key:
+    post:
+      security:
+      - Bearer: []
+      description: Generate a data encryption key (DEK) encrypted by a KMS key (KEK)
+      tags:
+      - kms
+      summary: Generate data key
+      operationId: PostGenerateDataKeyRoute
+      parameters:
+      - name: Payload
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/postGenerateDataKeyPayload'
+      responses:
+        "200":
+          description: PostGenerateDataKeyResponse
+          schema:
+            $ref: '#/definitions/postGenerateDataKeyResponse'
+        "400":
+          description: PublicHTTPValidationError
+          schema:
+            $ref: '#/definitions/publicHttpValidationError'
+        "401":
+          description: PublicHTTPError
+          schema:
+            $ref: '#/definitions/publicHttpError'
+        "403":
+          description: Key is disabled
+          schema:
+            $ref: '#/definitions/publicHttpError'
+        "404":
+          description: Key not found
+          schema:
+            $ref: '#/definitions/publicHttpError'
+  /api/v1/kms/keys:
+    get:
+      security:
+      - Bearer: []
+      description: List all keys
+      tags:
+      - kms
+      summary: List keys
+      operationId: GetListKeysRoute
+      parameters:
+      - enum:
+        - Enabled
+        - Disabled
+        - PendingDeletion
+        type: string
+        description: Filter by key state
+        name: state
+        in: query
+      - type: string
+        description: Filter by key type
+        name: key_type
+        in: query
+      - type: string
+        description: Filter by alias (prefix match)
+        name: alias
+        in: query
+      - type: integer
+        default: 100
+        description: Maximum number of results
+        name: limit
+        in: query
+      - type: integer
+        default: 0
+        description: Offset for pagination
+        name: offset
+        in: query
+      responses:
+        "200":
+          description: ListKeysResponse
+          schema:
+            $ref: '#/definitions/listKeysResponse'
+        "401":
+          description: PublicHTTPError
+          schema:
+            $ref: '#/definitions/publicHttpError'
+    post:
+      security:
+      - Bearer: []
+      description: Create a new key in KMS
+      tags:
+      - kms
+      summary: Create key
+      operationId: PostCreateKeyRoute
+      parameters:
+      - name: Payload
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/postCreateKeyPayload'
+      responses:
+        "201":
+          description: CreateKeyResponse
+          schema:
+            $ref: '#/definitions/createKeyResponse'
+        "400":
+          description: PublicHTTPValidationError
+          schema:
+            $ref: '#/definitions/publicHttpValidationError'
+        "401":
+          description: PublicHTTPError
+          schema:
+            $ref: '#/definitions/publicHttpError'
+        "403":
+          description: Policy denied
+          schema:
+            $ref: '#/definitions/publicHttpError'
+  /api/v1/kms/keys/{keyId}:
+    get:
+      security:
+      - Bearer: []
+      description: Get key metadata
+      tags:
+      - kms
+      summary: Get key
+      operationId: GetKeyRoute
+      parameters:
+      - type: string
+        description: Key ID
+        name: keyId
+        in: path
+        required: true
+      responses:
+        "200":
+          description: GetKeyResponse
+          schema:
+            $ref: '#/definitions/getKeyResponse'
+        "401":
+          description: PublicHTTPError
+          schema:
+            $ref: '#/definitions/publicHttpError'
+        "404":
+          description: Key not found
+          schema:
+            $ref: '#/definitions/publicHttpError'
+    put:
+      security:
+      - Bearer: []
+      description: Update key metadata
+      tags:
+      - kms
+      summary: Update key
+      operationId: PutUpdateKeyRoute
+      parameters:
+      - type: string
+        description: Key ID
+        name: keyId
+        in: path
+        required: true
+      - name: Payload
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/putUpdateKeyPayload'
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/getKeyResponse'
+        "401":
+          description: PublicHTTPError
+          schema:
+            $ref: '#/definitions/publicHttpError'
+        "403":
+          description: Policy denied
+          schema:
+            $ref: '#/definitions/publicHttpError'
+        "404":
+          description: Key not found
+          schema:
+            $ref: '#/definitions/publicHttpError'
+    delete:
+      security:
+      - Bearer: []
+      description: Delete key (schedule for deletion)
+      tags:
+      - kms
+      summary: Delete key
+      operationId: DeleteKeyRoute
+      parameters:
+      - type: string
+        description: Key ID
+        name: keyId
+        in: path
+        required: true
+      responses:
+        "204":
+          description: Success
+        "401":
+          description: PublicHTTPError
+          schema:
+            $ref: '#/definitions/publicHttpError'
+        "403":
+          description: Policy denied
+          schema:
+            $ref: '#/definitions/publicHttpError'
+        "404":
+          description: Key not found
+          schema:
+            $ref: '#/definitions/publicHttpError'
+  /api/v1/kms/keys/{keyId}/disable:
+    post:
+      security:
+      - Bearer: []
+      description: Disable a key
+      tags:
+      - kms
+      summary: Disable key
+      operationId: PostDisableKeyRoute
+      parameters:
+      - type: string
+        description: Key ID
+        name: keyId
+        in: path
+        required: true
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/getKeyResponse'
+        "401":
+          description: PublicHTTPError
+          schema:
+            $ref: '#/definitions/publicHttpError'
+        "403":
+          description: Policy denied
+          schema:
+            $ref: '#/definitions/publicHttpError'
+        "404":
+          description: Key not found
+          schema:
+            $ref: '#/definitions/publicHttpError'
+  /api/v1/kms/keys/{keyId}/enable:
+    post:
+      security:
+      - Bearer: []
+      description: Enable a disabled key
+      tags:
+      - kms
+      summary: Enable key
+      operationId: PostEnableKeyRoute
+      parameters:
+      - type: string
+        description: Key ID
+        name: keyId
+        in: path
+        required: true
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/getKeyResponse'
+        "401":
+          description: PublicHTTPError
+          schema:
+            $ref: '#/definitions/publicHttpError'
+        "403":
+          description: Policy denied
+          schema:
+            $ref: '#/definitions/publicHttpError'
+        "404":
+          description: Key not found
+          schema:
+            $ref: '#/definitions/publicHttpError'
+  /api/v1/kms/keys/{keyId}/rotate:
+    post:
+      security:
+      - Bearer: []
+      description: Rotate key (create new version)
+      tags:
+      - kms
+      summary: Rotate key
+      operationId: PostRotateKeyRoute
+      parameters:
+      - type: string
+        description: Key ID
+        name: keyId
+        in: path
+        required: true
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/getKeyResponse'
+        "401":
+          description: PublicHTTPError
+          schema:
+            $ref: '#/definitions/publicHttpError'
+        "403":
+          description: Policy denied
+          schema:
+            $ref: '#/definitions/publicHttpError'
+        "404":
+          description: Key not found
+          schema:
+            $ref: '#/definitions/publicHttpError'
+  /api/v1/kms/policies:
+    get:
+      security:
+      - Bearer: []
+      description: List all policies
+      tags:
+      - kms
+      summary: List policies
+      operationId: GetListPoliciesRoute
+      responses:
+        "200":
+          description: ListPoliciesResponse
+          schema:
+            $ref: '#/definitions/listPoliciesResponse'
+        "401":
+          description: PublicHTTPError
+          schema:
+            $ref: '#/definitions/publicHttpError'
+    post:
+      security:
+      - Bearer: []
+      description: Create a new policy
+      tags:
+      - kms
+      summary: Create policy
+      operationId: PostCreatePolicyRoute
+      parameters:
+      - name: Payload
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/postCreatePolicyPayload'
+      responses:
+        "201":
+          description: CreatePolicyResponse
+          schema:
+            $ref: '#/definitions/createPolicyResponse'
+        "400":
+          description: PublicHTTPValidationError
+          schema:
+            $ref: '#/definitions/publicHttpValidationError'
+        "401":
+          description: PublicHTTPError
+          schema:
+            $ref: '#/definitions/publicHttpError'
+  /api/v1/kms/policies/{policyId}:
+    get:
+      security:
+      - Bearer: []
+      description: Get policy by ID
+      tags:
+      - kms
+      summary: Get policy
+      operationId: GetPolicyRoute
+      parameters:
+      - type: string
+        description: Policy ID
+        name: policyId
+        in: path
+        required: true
+      responses:
+        "200":
+          description: GetPolicyResponse
+          schema:
+            $ref: '#/definitions/getPolicyResponse'
+        "401":
+          description: PublicHTTPError
+          schema:
+            $ref: '#/definitions/publicHttpError'
+        "404":
+          description: Policy not found
+          schema:
+            $ref: '#/definitions/publicHttpError'
+    put:
+      security:
+      - Bearer: []
+      description: Update policy
+      tags:
+      - kms
+      summary: Update policy
+      operationId: PutUpdatePolicyRoute
+      parameters:
+      - type: string
+        description: Policy ID
+        name: policyId
+        in: path
+        required: true
+      - name: Payload
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/putUpdatePolicyPayload'
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/getPolicyResponse'
+        "401":
+          description: PublicHTTPError
+          schema:
+            $ref: '#/definitions/publicHttpError'
+        "404":
+          description: Policy not found
+          schema:
+            $ref: '#/definitions/publicHttpError'
+    delete:
+      security:
+      - Bearer: []
+      description: Delete policy
+      tags:
+      - kms
+      summary: Delete policy
+      operationId: DeletePolicyRoute
+      parameters:
+      - type: string
+        description: Policy ID
+        name: policyId
+        in: path
+        required: true
+      responses:
+        "204":
+          description: Success
+        "401":
+          description: PublicHTTPError
+          schema:
+            $ref: '#/definitions/publicHttpError'
+        "404":
+          description: Policy not found
+          schema:
+            $ref: '#/definitions/publicHttpError'
+  /api/v1/kms/secrets:
+    post:
+      security:
+      - Bearer: []
+      description: Create a new secret and store encrypted data
+      tags:
+      - kms
+      summary: Create secret
+      operationId: PostCreateSecretRoute
+      parameters:
+      - name: Payload
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/postCreateSecretPayload'
+      responses:
+        "201":
+          description: CreateSecretResponse
+          schema:
+            $ref: '#/definitions/createSecretResponse'
+        "400":
+          description: PublicHTTPValidationError
+          schema:
+            $ref: '#/definitions/publicHttpValidationError'
+        "401":
+          description: PublicHTTPError
+          schema:
+            $ref: '#/definitions/publicHttpError'
+        "409":
+          description: Secret already exists
+          schema:
+            $ref: '#/definitions/publicHttpError'
+  /api/v1/kms/secrets/{keyId}:
+    get:
+      security:
+      - Bearer: []
+      description: Get secret and decrypt data
+      tags:
+      - kms
+      summary: Get secret
+      operationId: GetSecretRoute
+      parameters:
+      - type: string
+        description: Secret key ID
+        name: keyId
+        in: path
+        required: true
+      responses:
+        "200":
+          description: GetSecretResponse
+          schema:
+            $ref: '#/definitions/getSecretResponse'
+        "401":
+          description: PublicHTTPError
+          schema:
+            $ref: '#/definitions/publicHttpError'
+        "404":
+          description: Secret not found
+          schema:
+            $ref: '#/definitions/publicHttpError'
+    put:
+      security:
+      - Bearer: []
+      description: Update secret data
+      tags:
+      - kms
+      summary: Update secret
+      operationId: PutUpdateSecretRoute
+      parameters:
+      - type: string
+        description: Secret key ID
+        name: keyId
+        in: path
+        required: true
+      - name: Payload
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/putUpdateSecretPayload'
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/getSecretResponse'
+        "401":
+          description: PublicHTTPError
+          schema:
+            $ref: '#/definitions/publicHttpError'
+        "404":
+          description: Secret not found
+          schema:
+            $ref: '#/definitions/publicHttpError'
+    delete:
+      security:
+      - Bearer: []
+      description: Delete secret
+      tags:
+      - kms
+      summary: Delete secret
+      operationId: DeleteSecretRoute
+      parameters:
+      - type: string
+        description: Secret key ID
+        name: keyId
+        in: path
+        required: true
+      responses:
+        "204":
+          description: Success
+        "401":
+          description: PublicHTTPError
+          schema:
+            $ref: '#/definitions/publicHttpError'
+        "404":
+          description: Secret not found
+          schema:
+            $ref: '#/definitions/publicHttpError'
+    head:
+      security:
+      - Bearer: []
+      description: Check if secret exists
+      tags:
+      - kms
+      summary: Check secret exists
+      operationId: HeadSecretExistsRoute
+      parameters:
+      - type: string
+        description: Secret key ID
+        name: keyId
+        in: path
+        required: true
+      responses:
+        "200":
+          description: Secret exists
+        "401":
+          description: PublicHTTPError
+          schema:
+            $ref: '#/definitions/publicHttpError'
+        "404":
+          description: Secret not found
+  /api/v1/kms/sign:
+    post:
+      security:
+      - Bearer: []
+      description: Sign a message using a KMS key
+      tags:
+      - kms
+      summary: Sign message
+      operationId: PostSignRoute
+      parameters:
+      - name: Payload
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/postSignPayload'
+      responses:
+        "200":
+          description: PostSignResponse
+          schema:
+            $ref: '#/definitions/postSignResponse'
+        "400":
+          description: PublicHTTPValidationError
+          schema:
+            $ref: '#/definitions/publicHttpValidationError'
+        "401":
+          description: PublicHTTPError
+          schema:
+            $ref: '#/definitions/publicHttpError'
+        "403":
+          description: Key is disabled
+          schema:
+            $ref: '#/definitions/publicHttpError'
+        "404":
+          description: Key not found
+          schema:
+            $ref: '#/definitions/publicHttpError'
+  /api/v1/kms/verify:
+    post:
+      security:
+      - Bearer: []
+      description: Verify a signature using a KMS key
+      tags:
+      - kms
+      summary: Verify signature
+      operationId: PostVerifyRoute
+      parameters:
+      - name: Payload
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/postVerifyPayload'
+      responses:
+        "200":
+          description: PostVerifyResponse
+          schema:
+            $ref: '#/definitions/postVerifyResponse'
+        "400":
+          description: Invalid signature
+          schema:
+            $ref: '#/definitions/publicHttpError'
+        "401":
+          description: PublicHTTPError
+          schema:
+            $ref: '#/definitions/publicHttpError'
+        "404":
+          description: Key not found
+          schema:
+            $ref: '#/definitions/publicHttpError'
   /api/v1/push/token:
     put:
       security:
@@ -418,6 +1187,77 @@ paths:
         "200":
           description: OK
 definitions:
+  createKeyResponse:
+    type: object
+    required:
+    - key_id
+    - key_type
+    - key_state
+    properties:
+      alias:
+        description: 密钥别名
+        type: string
+        example: my-encryption-key
+      created_at:
+        type: string
+        format: date-time
+        example: "2025-11-26T10:00:00Z"
+      description:
+        description: 密钥描述
+        type: string
+      key_id:
+        description: 密钥ID
+        type: string
+        example: key-1234567890abcdef
+      key_state:
+        type: string
+        enum:
+        - Enabled
+        - Disabled
+        - PendingDeletion
+        - Deleted
+        example: Enabled
+      key_type:
+        type: string
+        example: AES_256
+      tags:
+        type: object
+        additionalProperties:
+          type: string
+      updated_at:
+        type: string
+        format: date-time
+        example: "2025-11-26T10:00:00Z"
+  createPolicyResponse:
+    type: object
+    required:
+    - policy_id
+    properties:
+      created_at:
+        type: string
+        format: date-time
+        example: "2025-11-26T10:00:00Z"
+      description:
+        type: string
+      policy_id:
+        type: string
+        example: policy-1234567890abcdef
+      updated_at:
+        type: string
+        format: date-time
+        example: "2025-11-26T10:00:00Z"
+  createSecretResponse:
+    type: object
+    required:
+    - key_id
+    properties:
+      created_at:
+        type: string
+        format: date-time
+        example: "2025-11-26T10:00:00Z"
+      key_id:
+        type: string
+        example: wallet-keystore-00000000-0000-0000-0000-000000000001
   deleteUserAccountPayload:
     type: object
     required:
@@ -429,6 +1269,123 @@ definitions:
         maxLength: 500
         minLength: 1
         example: correct horse battery staple
+  getAuditLogsResponse:
+    type: object
+    required:
+    - events
+    properties:
+      events:
+        type: array
+        items:
+          type: object
+          required:
+          - timestamp
+          - event_type
+          - operation
+          - result
+          properties:
+            details:
+              type: object
+              additionalProperties: true
+            event_type:
+              type: string
+              example: KeyCreated
+            ip_address:
+              type: string
+              example: 192.168.1.1
+            key_id:
+              type: string
+              example: key-1234567890abcdef
+            operation:
+              type: string
+              example: create_key
+            result:
+              type: string
+              enum:
+              - Success
+              - Failed
+              example: Success
+            timestamp:
+              type: string
+              format: date-time
+              example: "2025-11-26T10:00:00Z"
+            user_id:
+              type: string
+              example: user-123
+      total:
+        type: integer
+        example: 100
+  getKeyResponse:
+    type: object
+    required:
+    - key_id
+    - key_type
+    - key_state
+    properties:
+      alias:
+        type: string
+      created_at:
+        type: string
+        format: date-time
+      description:
+        type: string
+      key_id:
+        type: string
+        example: key-1234567890abcdef
+      key_state:
+        type: string
+        example: Enabled
+      key_type:
+        type: string
+        example: AES_256
+      latest_version:
+        type: integer
+        example: 1
+      tags:
+        type: object
+        additionalProperties:
+          type: string
+      updated_at:
+        type: string
+        format: date-time
+  getPolicyResponse:
+    type: object
+    required:
+    - policy_id
+    - policy_document
+    properties:
+      created_at:
+        type: string
+        format: date-time
+      description:
+        type: string
+      policy_document:
+        description: 策略文档（JSON格式）
+        type: object
+      policy_id:
+        type: string
+        example: policy-1234567890abcdef
+      updated_at:
+        type: string
+        format: date-time
+  getSecretResponse:
+    type: object
+    required:
+    - key_id
+    - data
+    properties:
+      data:
+        description: 解密后的数据（base64编码）
+        type: string
+        format: byte
+        example: eyJ2ZXJzaW9uIjozLCJpZCI6InV1aWQiLCJjcnlwdG8iOnsiY2lwaGVydGV4dCI6ImVuY3J5cHRlZF9tbmVtb25pY19oZXgiLCJjaXBoZXJwYXJhbXMiOnsiaXYiOiJpdl9oZXgifSwiY2lwaGVyIjoiYWVzLTEyOC1jdHIiLCJrZGYiOiJzY3J5cHQiLCJrZGZwYXJhbXMiOnsiZGtsZW4iOjMyLCJzYWx0Ijoic2FsdF9oZXgiLCJuIjoyNjIxNDQsInIiOjgsInAiOjF9LCJtYWMiOiJtYWNfaGV4In19fQ==
+      key_id:
+        type: string
+        example: wallet-keystore-00000000-0000-0000-0000-000000000001
+      updated_at:
+        type: string
+        format: date-time
+        example: "2025-11-26T10:00:00Z"
   getUserInfoResponse:
     type: object
     required:
@@ -475,6 +1432,30 @@ definitions:
       key:
         description: Key of field failing validation
         type: string
+  listKeysResponse:
+    type: object
+    required:
+    - keys
+    properties:
+      keys:
+        type: array
+        items:
+          $ref: '#/definitions/getKeyResponse'
+      total:
+        type: integer
+        example: 10
+  listPoliciesResponse:
+    type: object
+    required:
+    - policies
+    properties:
+      policies:
+        type: array
+        items:
+          $ref: '#/definitions/getPolicyResponse'
+      total:
+        type: integer
+        example: 5
   orderDir:
     type: string
     enum:
@@ -498,6 +1479,169 @@ definitions:
         maxLength: 500
         minLength: 1
         example: correct horse battery staple
+  postCreateKeyPayload:
+    type: object
+    required:
+    - key_type
+    properties:
+      alias:
+        description: 密钥别名
+        type: string
+        example: my-encryption-key
+      description:
+        description: 密钥描述
+        type: string
+        example: 用于生产环境数据加密
+      key_spec:
+        type: object
+        properties:
+          algorithm:
+            type: string
+            example: AES
+          attributes:
+            type: object
+            additionalProperties:
+              type: string
+          curve:
+            type: string
+            example: P-256
+          key_size:
+            type: integer
+            example: 256
+      key_type:
+        description: 密钥类型
+        type: string
+        enum:
+        - ECC_SECP256K1
+        - ECC_P256
+        - ED25519
+        - AES_256
+        example: AES_256
+      policy_id:
+        description: 策略ID
+        type: string
+        example: policy-123
+      tags:
+        description: 标签
+        type: object
+        additionalProperties:
+          type: string
+        example:
+          environment: production
+          team: backend
+  postCreatePolicyPayload:
+    type: object
+    required:
+    - policy_id
+    - policy_document
+    properties:
+      description:
+        description: 策略描述
+        type: string
+        example: 允许创建和使用密钥的策略
+      policy_document:
+        description: 策略文档（JSON格式）
+        type: object
+        example:
+          statements:
+          - actions:
+            - create_key
+            - encrypt
+            - decrypt
+            effect: Allow
+            resources:
+            - '*'
+      policy_id:
+        description: 策略ID
+        type: string
+        example: policy-1234567890abcdef
+  postCreateSecretPayload:
+    type: object
+    required:
+    - key_id
+    - data
+    properties:
+      data:
+        description: 要存储的数据（base64编码）
+        type: string
+        format: byte
+        example: eyJ2ZXJzaW9uIjozLCJpZCI6InV1aWQiLCJjcnlwdG8iOnsiY2lwaGVydGV4dCI6ImVuY3J5cHRlZF9tbmVtb25pY19oZXgiLCJjaXBoZXJwYXJhbXMiOnsiaXYiOiJpdl9oZXgifSwiY2lwaGVyIjoiYWVzLTEyOC1jdHIiLCJrZGYiOiJzY3J5cHQiLCJrZGZwYXJhbXMiOnsiZGtsZW4iOjMyLCJzYWx0Ijoic2FsdF9oZXgiLCJuIjoyNjIxNDQsInIiOjgsInAiOjF9LCJtYWMiOiJtYWNfaGV4In19fQ==
+      key_id:
+        description: Secret 标识符
+        type: string
+        example: wallet-keystore-00000000-0000-0000-0000-000000000001
+  postDecryptPayload:
+    type: object
+    required:
+    - ciphertext_blob
+    properties:
+      ciphertext_blob:
+        description: 密文数据（base64编码）
+        type: string
+        format: byte
+        example: eyJrZXlfaWQiOiJrZXktMTIzNDU2Nzg5MGFiY2RlZiIsInZlcnNpb24iOjEsImNpcGhlcnRleHQiOiIuLi4ifQ==
+      encryption_context:
+        description: 加密上下文（必须与加密时一致）
+        type: object
+        additionalProperties:
+          type: string
+  postDecryptResponse:
+    type: object
+    required:
+    - plaintext
+    - key_id
+    properties:
+      key_id:
+        type: string
+        example: key-1234567890abcdef
+      key_version:
+        type: integer
+        example: 1
+      plaintext:
+        description: 明文数据（base64编码）
+        type: string
+        format: byte
+        example: SGVsbG8gV29ybGQ=
+  postEncryptPayload:
+    type: object
+    required:
+    - key_id
+    - plaintext
+    properties:
+      encryption_context:
+        description: 加密上下文（可选）
+        type: object
+        additionalProperties:
+          type: string
+        example:
+          environment: production
+          purpose: database-encryption
+      key_id:
+        description: 密钥ID
+        type: string
+        example: key-1234567890abcdef
+      plaintext:
+        description: 明文数据（base64编码）
+        type: string
+        format: byte
+        example: SGVsbG8gV29ybGQ=
+  postEncryptResponse:
+    type: object
+    required:
+    - ciphertext_blob
+    - key_id
+    properties:
+      ciphertext_blob:
+        description: 密文数据（base64编码）
+        type: string
+        format: byte
+        example: eyJrZXlfaWQiOiJrZXktMTIzNDU2Nzg5MGFiY2RlZiIsInZlcnNpb24iOjEsImNpcGhlcnRleHQiOiIuLi4ifQ==
+      key_id:
+        type: string
+        example: key-1234567890abcdef
+      key_version:
+        type: integer
+        example: 1
   postForgotPasswordCompletePayload:
     type: object
     required:
@@ -527,6 +1671,54 @@ definitions:
         maxLength: 255
         minLength: 1
         example: user@example.com
+  postGenerateDataKeyPayload:
+    type: object
+    required:
+    - key_id
+    properties:
+      encryption_context:
+        description: 加密上下文（可选）
+        type: object
+        additionalProperties:
+          type: string
+      key_id:
+        description: 密钥ID（KEK）
+        type: string
+        example: key-1234567890abcdef
+      key_spec:
+        description: 数据密钥规格
+        type: string
+        enum:
+        - AES_256
+        example: AES_256
+      number_of_bytes:
+        description: 数据密钥长度（字节）
+        type: integer
+        example: 32
+      return_plaintext:
+        description: 是否返回明文数据密钥
+        type: boolean
+        default: true
+        example: true
+  postGenerateDataKeyResponse:
+    type: object
+    required:
+    - ciphertext_blob
+    - key_id
+    properties:
+      ciphertext_blob:
+        description: 加密的数据密钥（base64编码）
+        type: string
+        format: byte
+        example: eyJrZXlfaWQiOiJrZXktMTIzNDU2Nzg5MGFiY2RlZiIsInZlcnNpb24iOjEsImNpcGhlcnRleHQiOiIuLi4ifQ==
+      key_id:
+        type: string
+        example: key-1234567890abcdef
+      plaintext:
+        description: 明文数据密钥（base64编码，仅当return_plaintext=true时返回）
+        type: string
+        format: byte
+        example: SGVsbG8gV29ybGQ=
   postLoginPayload:
     type: object
     required:
@@ -610,6 +1802,114 @@ definitions:
         maxLength: 255
         minLength: 1
         example: user@example.com
+  postSignPayload:
+    type: object
+    required:
+    - key_id
+    - message
+    - algorithm
+    properties:
+      algorithm:
+        description: 签名算法
+        type: string
+        enum:
+        - ECDSA_SHA256
+        - ECDSA_SHA384
+        - ECDSA_SHA512
+        - ED25519
+        example: ECDSA_SHA256
+      key_id:
+        description: 密钥ID
+        type: string
+        example: key-1234567890abcdef
+      message:
+        description: 消息数据（base64编码）
+        type: string
+        format: byte
+        example: SGVsbG8gV29ybGQ=
+      mode:
+        description: 签名模式（RAW=原始数据，DIGEST=消息摘要）
+        type: string
+        default: DIGEST
+        enum:
+        - RAW
+        - DIGEST
+        example: DIGEST
+  postSignResponse:
+    type: object
+    required:
+    - signature
+    - key_id
+    properties:
+      algorithm:
+        type: string
+        example: ECDSA_SHA256
+      key_id:
+        type: string
+        example: key-1234567890abcdef
+      key_version:
+        type: integer
+        example: 1
+      signature:
+        description: 签名数据（base64编码）
+        type: string
+        format: byte
+        example: MEUCIQDxHqXjF3Z8K9L2M1N4O5P6Q7R8S9T0U1V2W3X4Y5Z6A7B8C9D0E1F2G3H4I5J6K7L8M9N0O1P2Q3R4S5T6U7V8W9X0Y1Z2A3B4C5D6E7F8G9H0I1J2K3L4M5N6O7P8Q9R0S1T2U3V4W5X6Y7Z8A9B0C1D2E3F4G5H6I7J8K9L0M1N2O3P4Q5R6S7T8U9V0W1X2Y3Z4A5B6C7D8E9F0G1H2I3J4K5L6M7N8O9P0Q1R2S3T4U5V6W7X8Y9Z0
+  postVerifyPayload:
+    type: object
+    required:
+    - key_id
+    - message
+    - signature
+    - algorithm
+    properties:
+      algorithm:
+        description: 签名算法
+        type: string
+        enum:
+        - ECDSA_SHA256
+        - ECDSA_SHA384
+        - ECDSA_SHA512
+        - ED25519
+        example: ECDSA_SHA256
+      key_id:
+        description: 密钥ID
+        type: string
+        example: key-1234567890abcdef
+      message:
+        description: 消息数据（base64编码）
+        type: string
+        format: byte
+        example: SGVsbG8gV29ybGQ=
+      mode:
+        description: 签名模式
+        type: string
+        default: DIGEST
+        enum:
+        - RAW
+        - DIGEST
+        example: DIGEST
+      signature:
+        description: 签名数据（base64编码）
+        type: string
+        format: byte
+        example: MEUCIQDxHqXjF3Z8K9L2M1N4O5P6Q7R8S9T0U1V2W3X4Y5Z6A7B8C9D0E1F2G3H4I5J6K7L8M9N0O1P2Q3R4S5T6U7V8W9X0Y1Z2A3B4C5D6E7F8G9H0I1J2K3L4M5N6O7P8Q9R0S1T2U3V4W5X6Y7Z8A9B0C1D2E3F4G5H6I7J8K9L0M1N2O3P4Q5R6S7T8U9V0W1X2Y3Z4A5B6C7D8E9F0G1H2I3J4K5L6M7N8O9P0Q1R2S3T4U5V6W7X8Y9Z0
+  postVerifyResponse:
+    type: object
+    required:
+    - valid
+    - key_id
+    properties:
+      key_id:
+        type: string
+        example: key-1234567890abcdef
+      key_version:
+        type: integer
+        example: 1
+      valid:
+        description: 签名是否有效
+        type: boolean
+        example: true
   publicHttpError:
     type: object
     required:
@@ -664,6 +1964,28 @@ definitions:
         type: array
         items:
           $ref: '#/definitions/httpValidationErrorDetail'
+  putUpdateKeyPayload:
+    type: object
+    properties:
+      description:
+        description: 密钥描述
+        type: string
+      policy_id:
+        description: 策略ID
+        type: string
+      tags:
+        type: object
+        additionalProperties:
+          type: string
+  putUpdatePolicyPayload:
+    type: object
+    properties:
+      description:
+        description: 策略描述
+        type: string
+      policy_document:
+        description: 策略文档（JSON格式）
+        type: object
   putUpdatePushTokenPayload:
     type: object
     required:
@@ -687,6 +2009,16 @@ definitions:
         type: string
         maxLength: 500
         example: fcm
+  putUpdateSecretPayload:
+    type: object
+    required:
+    - data
+    properties:
+      data:
+        description: 要更新的数据（base64编码）
+        type: string
+        format: byte
+        example: eyJ2ZXJzaW9uIjozLCJpZCI6InV1aWQiLCJjcnlwdG8iOnsiY2lwaGVydGV4dCI6ImVuY3J5cHRlZF9tbmVtb25pY19oZXgiLCJjaXBoZXJwYXJhbXMiOnsiaXYiOiJpdl9oZXgifSwiY2lwaGVyIjoiYWVzLTEyOC1jdHIiLCJrZGYiOiJzY3J5cHQiLCJrZGZwYXJhbXMiOnsiZGtsZW4iOjMyLCJzYWx0Ijoic2FsdF9oZXgiLCJuIjoyNjIxNDQsInIiOjgsInAiOjF9LCJtYWMiOiJtYWNfaGV4In19fQ==
   registerResponse:
     type: object
     required:
@@ -697,6 +2029,12 @@ definitions:
         type: boolean
         example: true
 parameters:
+  keyIdParam:
+    type: string
+    description: Key ID
+    name: keyId
+    in: path
+    required: true
   registrationTokenParam:
     type: string
     format: uuid4
@@ -713,10 +2051,30 @@ responses:
     description: PublicHTTPError
     schema:
       $ref: '#/definitions/publicHttpError'
+  InvalidCiphertextResponse:
+    description: Invalid ciphertext
+    schema:
+      $ref: '#/definitions/publicHttpError'
   InvalidPasswordResponse:
     description: PublicHTTPValidationError, type `INVALID_PASSWORD`
     schema:
       $ref: '#/definitions/publicHttpValidationError'
+  InvalidSignatureResponse:
+    description: Invalid signature
+    schema:
+      $ref: '#/definitions/publicHttpError'
+  KeyDisabledResponse:
+    description: Key is disabled
+    schema:
+      $ref: '#/definitions/publicHttpError'
+  KeyNotFoundResponse:
+    description: Key not found
+    schema:
+      $ref: '#/definitions/publicHttpError'
+  PolicyDeniedResponse:
+    description: Policy denied
+    schema:
+      $ref: '#/definitions/publicHttpError'
   ValidationError:
     description: PublicHTTPValidationError
     schema:

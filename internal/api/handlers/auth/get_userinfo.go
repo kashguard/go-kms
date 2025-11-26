@@ -4,9 +4,9 @@ import (
 	"errors"
 	"net/http"
 
-	"allaboutapps.dev/aw/go-starter/internal/api"
-	"allaboutapps.dev/aw/go-starter/internal/auth"
-	"allaboutapps.dev/aw/go-starter/internal/util"
+	"github.com/kashguard/go-kms/internal/api"
+	"github.com/kashguard/go-kms/internal/auth"
+	"github.com/kashguard/go-kms/internal/util"
 	"github.com/labstack/echo/v4"
 )
 

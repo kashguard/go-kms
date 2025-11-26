@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"net/http"
 
-	"allaboutapps.dev/aw/go-starter/internal/api"
-	"allaboutapps.dev/aw/go-starter/internal/api/handlers/constants"
-	"allaboutapps.dev/aw/go-starter/internal/data/dto"
-	"allaboutapps.dev/aw/go-starter/internal/types/auth"
+	"github.com/kashguard/go-kms/internal/api"
+	"github.com/kashguard/go-kms/internal/api/handlers/constants"
+	"github.com/kashguard/go-kms/internal/data/dto"
+	"github.com/kashguard/go-kms/internal/types/auth"
 
-	"allaboutapps.dev/aw/go-starter/internal/util"
+	"github.com/kashguard/go-kms/internal/util"
 	"github.com/labstack/echo/v4"
 )
 

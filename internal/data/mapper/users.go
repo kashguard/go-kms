@@ -1,8 +1,8 @@
 package mapper
 
 import (
-	"allaboutapps.dev/aw/go-starter/internal/data/dto"
-	"allaboutapps.dev/aw/go-starter/internal/models"
+	"github.com/kashguard/go-kms/internal/data/dto"
+	"github.com/kashguard/go-kms/internal/models"
 )
 
 func LocalAppUserProfileToDTO(appUserProfile *models.AppUserProfile) dto.AppUserProfile {

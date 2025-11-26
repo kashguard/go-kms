@@ -11,9 +11,11 @@ func TestToOne(t *testing.T) {
 	t.Run("AccessTokenToUserUsingUser", testAccessTokenToOneUserUsingUser)
 	t.Run("AppUserProfileToUserUsingUser", testAppUserProfileToOneUserUsingUser)
 	t.Run("ConfirmationTokenToUserUsingUser", testConfirmationTokenToOneUserUsingUser)
+	t.Run("KeyVersionToKeyUsingKey", testKeyVersionToOneKeyUsingKey)
 	t.Run("PasswordResetTokenToUserUsingUser", testPasswordResetTokenToOneUserUsingUser)
 	t.Run("PushTokenToUserUsingUser", testPushTokenToOneUserUsingUser)
 	t.Run("RefreshTokenToUserUsingUser", testRefreshTokenToOneUserUsingUser)
+	t.Run("SecretToKeyUsingKMSKey", testSecretToOneKeyUsingKMSKey)
 }
 
 // TestOneToOne tests cannot be run in parallel
@@ -25,6 +27,8 @@ func TestOneToOne(t *testing.T) {
 // TestToMany tests cannot be run in parallel
 // or deadlocks can occur.
 func TestToMany(t *testing.T) {
+	t.Run("KeyToKeyVersions", testKeyToManyKeyVersions)
+	t.Run("KeyToKMSKeySecrets", testKeyToManyKMSKeySecrets)
 	t.Run("UserToAccessTokens", testUserToManyAccessTokens)
 	t.Run("UserToConfirmationTokens", testUserToManyConfirmationTokens)
 	t.Run("UserToPasswordResetTokens", testUserToManyPasswordResetTokens)
@@ -38,9 +42,11 @@ func TestToOneSet(t *testing.T) {
 	t.Run("AccessTokenToUserUsingAccessTokens", testAccessTokenToOneSetOpUserUsingUser)
 	t.Run("AppUserProfileToUserUsingAppUserProfile", testAppUserProfileToOneSetOpUserUsingUser)
 	t.Run("ConfirmationTokenToUserUsingConfirmationTokens", testConfirmationTokenToOneSetOpUserUsingUser)
+	t.Run("KeyVersionToKeyUsingKeyVersions", testKeyVersionToOneSetOpKeyUsingKey)
 	t.Run("PasswordResetTokenToUserUsingPasswordResetTokens", testPasswordResetTokenToOneSetOpUserUsingUser)
 	t.Run("PushTokenToUserUsingPushTokens", testPushTokenToOneSetOpUserUsingUser)
 	t.Run("RefreshTokenToUserUsingRefreshTokens", testRefreshTokenToOneSetOpUserUsingUser)
+	t.Run("SecretToKeyUsingKMSKeySecrets", testSecretToOneSetOpKeyUsingKMSKey)
 }
 
 // TestToOneRemove tests cannot be run in parallel
@@ -60,6 +66,8 @@ func TestOneToOneRemove(t *testing.T) {}
 // TestToManyAdd tests cannot be run in parallel
 // or deadlocks can occur.
 func TestToManyAdd(t *testing.T) {
+	t.Run("KeyToKeyVersions", testKeyToManyAddOpKeyVersions)
+	t.Run("KeyToKMSKeySecrets", testKeyToManyAddOpKMSKeySecrets)
 	t.Run("UserToAccessTokens", testUserToManyAddOpAccessTokens)
 	t.Run("UserToConfirmationTokens", testUserToManyAddOpConfirmationTokens)
 	t.Run("UserToPasswordResetTokens", testUserToManyAddOpPasswordResetTokens)

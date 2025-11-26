@@ -5,10 +5,10 @@ import (
 	"database/sql"
 	"fmt"
 
-	"allaboutapps.dev/aw/go-starter/internal/config"
-	"allaboutapps.dev/aw/go-starter/internal/metrics/users"
-	"allaboutapps.dev/aw/go-starter/internal/util"
 	"github.com/dlmiddlecote/sqlstats"
+	"github.com/kashguard/go-kms/internal/config"
+	"github.com/kashguard/go-kms/internal/metrics/users"
+	"github.com/kashguard/go-kms/internal/util"
 	"github.com/prometheus/client_golang/prometheus"
 )
 

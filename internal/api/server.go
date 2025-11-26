@@ -7,15 +7,22 @@ import (
 	"fmt"
 	"net/http"
 
-	"allaboutapps.dev/aw/go-starter/internal/config"
-	"allaboutapps.dev/aw/go-starter/internal/data/dto"
-	"allaboutapps.dev/aw/go-starter/internal/data/local"
-	"allaboutapps.dev/aw/go-starter/internal/i18n"
-	"allaboutapps.dev/aw/go-starter/internal/mailer"
-	"allaboutapps.dev/aw/go-starter/internal/metrics"
-	"allaboutapps.dev/aw/go-starter/internal/push"
-	"allaboutapps.dev/aw/go-starter/internal/util"
 	"github.com/dropbox/godropbox/time2"
+	"github.com/kashguard/go-kms/internal/config"
+	"github.com/kashguard/go-kms/internal/data/dto"
+	"github.com/kashguard/go-kms/internal/data/local"
+	"github.com/kashguard/go-kms/internal/i18n"
+	"github.com/kashguard/go-kms/internal/kms/audit"
+	"github.com/kashguard/go-kms/internal/kms/encryption"
+	"github.com/kashguard/go-kms/internal/kms/key"
+	"github.com/kashguard/go-kms/internal/kms/policy"
+	"github.com/kashguard/go-kms/internal/kms/secret"
+	"github.com/kashguard/go-kms/internal/kms/sign"
+	"github.com/kashguard/go-kms/internal/kms/storage"
+	"github.com/kashguard/go-kms/internal/mailer"
+	"github.com/kashguard/go-kms/internal/metrics"
+	"github.com/kashguard/go-kms/internal/push"
+	"github.com/kashguard/go-kms/internal/util"
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
 
@@ -29,6 +36,7 @@ type Router struct {
 	Management *echo.Group
 	APIV1Auth  *echo.Group
 	APIV1Push  *echo.Group
+	APIV1KMS   *echo.Group
 	WellKnown  *echo.Group
 }
 
@@ -56,6 +64,15 @@ type Server struct {
 	Auth    AuthService
 	Local   *local.Service
 	Metrics *metrics.Service
+
+	// KMS services
+	KeyService        key.Service
+	EncryptionService encryption.Service
+	SignService       sign.Service
+	SecretService     secret.Service
+	PolicyEngine      policy.Engine
+	AuditLogger       audit.Logger
+	MetadataStore     storage.MetadataStore
 }
 
 // newServerWithComponents is used by wire to initialize the server components.
@@ -71,17 +88,31 @@ func newServerWithComponents(
 	auth AuthService,
 	local *local.Service,
 	metrics *metrics.Service,
+	keyService key.Service,
+	encryptionService encryption.Service,
+	signService sign.Service,
+	secretService secret.Service,
+	policyEngine policy.Engine,
+	auditLogger audit.Logger,
+	metadataStore storage.MetadataStore,
 ) *Server {
 	return &Server{
-		Config:  cfg,
-		DB:      db,
-		Mailer:  mail,
-		Push:    pusher,
-		I18n:    i18n,
-		Clock:   clock,
-		Auth:    auth,
-		Local:   local,
-		Metrics: metrics,
+		Config:            cfg,
+		DB:                db,
+		Mailer:            mail,
+		Push:              pusher,
+		I18n:              i18n,
+		Clock:             clock,
+		Auth:              auth,
+		Local:             local,
+		Metrics:           metrics,
+		KeyService:        keyService,
+		EncryptionService: encryptionService,
+		SignService:       signService,
+		SecretService:     secretService,
+		PolicyEngine:      policyEngine,
+		AuditLogger:       auditLogger,
+		MetadataStore:     metadataStore,
 	}
 }
 

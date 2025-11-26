@@ -2,11 +2,17 @@
 package handlers
 
 import (
-	"allaboutapps.dev/aw/go-starter/internal/api"
-	"allaboutapps.dev/aw/go-starter/internal/api/handlers/auth"
-	"allaboutapps.dev/aw/go-starter/internal/api/handlers/common"
-	"allaboutapps.dev/aw/go-starter/internal/api/handlers/push"
-	"allaboutapps.dev/aw/go-starter/internal/api/handlers/wellknown"
+	"github.com/kashguard/go-kms/internal/api"
+	"github.com/kashguard/go-kms/internal/api/handlers/auth"
+	"github.com/kashguard/go-kms/internal/api/handlers/common"
+	"github.com/kashguard/go-kms/internal/api/handlers/kms/audit"
+	"github.com/kashguard/go-kms/internal/api/handlers/kms/encryption"
+	"github.com/kashguard/go-kms/internal/api/handlers/kms/keys"
+	"github.com/kashguard/go-kms/internal/api/handlers/kms/policies"
+	"github.com/kashguard/go-kms/internal/api/handlers/kms/secrets"
+	"github.com/kashguard/go-kms/internal/api/handlers/kms/sign"
+	"github.com/kashguard/go-kms/internal/api/handlers/push"
+	"github.com/kashguard/go-kms/internal/api/handlers/wellknown"
 	"github.com/labstack/echo/v4"
 )
 
@@ -28,6 +34,30 @@ func AttachAllRoutes(s *api.Server) {
 		common.GetReadyRoute(s),
 		common.GetSwaggerRoute(s),
 		common.GetVersionRoute(s),
+		audit.GetAuditLogsRoute(s),
+		encryption.PostDecryptRoute(s),
+		encryption.PostEncryptRoute(s),
+		encryption.PostGenerateDataKeyRoute(s),
+		keys.DeleteKeyRoute(s),
+		keys.GetKeyRoute(s),
+		keys.GetListKeysRoute(s),
+		keys.PostCreateKeyRoute(s),
+		keys.PostDisableKeyRoute(s),
+		keys.PostEnableKeyRoute(s),
+		keys.PostRotateKeyRoute(s),
+		keys.PutUpdateKeyRoute(s),
+		policies.DeletePolicyRoute(s),
+		policies.GetListPoliciesRoute(s),
+		policies.GetPolicyRoute(s),
+		policies.PostCreatePolicyRoute(s),
+		policies.PutUpdatePolicyRoute(s),
+		secrets.DeleteSecretRoute(s),
+		secrets.GetSecretRoute(s),
+		secrets.HeadSecretExistsRoute(s),
+		secrets.PostCreateSecretRoute(s),
+		secrets.PutUpdateSecretRoute(s),
+		sign.PostSignRoute(s),
+		sign.PostVerifyRoute(s),
 		push.PutUpdatePushTokenRoute(s),
 		wellknown.GetAndroidDigitalAssetLinksRoute(s),
 		wellknown.GetAppleAppSiteAssociationRoute(s),

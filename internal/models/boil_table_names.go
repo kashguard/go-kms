@@ -6,17 +6,27 @@ package models
 var TableNames = struct {
 	AccessTokens        string
 	AppUserProfiles     string
+	AuditLogs           string
 	ConfirmationTokens  string
+	KeyVersions         string
+	Keys                string
 	PasswordResetTokens string
+	Policies            string
 	PushTokens          string
 	RefreshTokens       string
+	Secrets             string
 	Users               string
 }{
 	AccessTokens:        "access_tokens",
 	AppUserProfiles:     "app_user_profiles",
+	AuditLogs:           "audit_logs",
 	ConfirmationTokens:  "confirmation_tokens",
+	KeyVersions:         "key_versions",
+	Keys:                "keys",
 	PasswordResetTokens: "password_reset_tokens",
+	Policies:            "policies",
 	PushTokens:          "push_tokens",
 	RefreshTokens:       "refresh_tokens",
+	Secrets:             "secrets",
 	Users:               "users",
 }

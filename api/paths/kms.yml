@@ -1,0 +1,699 @@
+swagger: "2.0"
+info:
+  title: github.com/kashguard/go-kms
+  version: 0.1.0
+responses:
+  KeyNotFoundResponse:
+    description: Key not found
+    schema:
+      $ref: ../definitions/errors.yml#/definitions/PublicHTTPError
+  KeyDisabledResponse:
+    description: Key is disabled
+    schema:
+      $ref: ../definitions/errors.yml#/definitions/PublicHTTPError
+  PolicyDeniedResponse:
+    description: Policy denied
+    schema:
+      $ref: ../definitions/errors.yml#/definitions/PublicHTTPError
+  InvalidCiphertextResponse:
+    description: Invalid ciphertext
+    schema:
+      $ref: ../definitions/errors.yml#/definitions/PublicHTTPError
+  InvalidSignatureResponse:
+    description: Invalid signature
+    schema:
+      $ref: ../definitions/errors.yml#/definitions/PublicHTTPError
+parameters:
+  keyIdParam:
+    type: string
+    in: path
+    name: keyId
+    description: Key ID
+    required: true
+paths:
+  # 密钥管理 API
+  /api/v1/kms/keys:
+    post:
+      security:
+        - Bearer: []
+      description: Create a new key in KMS
+      tags:
+        - kms
+      summary: Create key
+      operationId: PostCreateKeyRoute
+      parameters:
+        - name: Payload
+          in: body
+          required: true
+          schema:
+            $ref: ../definitions/kms.yml#/definitions/PostCreateKeyPayload
+      responses:
+        "201":
+          description: CreateKeyResponse
+          schema:
+            $ref: ../definitions/kms.yml#/definitions/CreateKeyResponse
+        "400":
+          $ref: "#/responses/ValidationError"
+        "403":
+          $ref: "#/responses/PolicyDeniedResponse"
+        "401":
+          $ref: "../paths/auth.yml#/responses/AuthUnauthorizedResponse"
+    get:
+      security:
+        - Bearer: []
+      description: List all keys
+      tags:
+        - kms
+      summary: List keys
+      operationId: GetListKeysRoute
+      parameters:
+        - name: state
+          type: string
+          enum:
+            - Enabled
+            - Disabled
+            - PendingDeletion
+          in: query
+          description: Filter by key state
+        - name: key_type
+          type: string
+          in: query
+          description: Filter by key type
+        - name: alias
+          type: string
+          in: query
+          description: Filter by alias (prefix match)
+        - name: limit
+          type: integer
+          in: query
+          description: Maximum number of results
+          default: 100
+        - name: offset
+          type: integer
+          in: query
+          description: Offset for pagination
+          default: 0
+      responses:
+        "200":
+          description: ListKeysResponse
+          schema:
+            $ref: ../definitions/kms.yml#/definitions/ListKeysResponse
+        "401":
+          $ref: "../paths/auth.yml#/responses/AuthUnauthorizedResponse"
+  
+  /api/v1/kms/keys/{keyId}:
+    get:
+      security:
+        - Bearer: []
+      description: Get key metadata
+      tags:
+        - kms
+      summary: Get key
+      operationId: GetKeyRoute
+      parameters:
+        - $ref: "#/parameters/keyIdParam"
+      responses:
+        "200":
+          description: GetKeyResponse
+          schema:
+            $ref: ../definitions/kms.yml#/definitions/GetKeyResponse
+        "404":
+          $ref: "#/responses/KeyNotFoundResponse"
+        "401":
+          $ref: "../paths/auth.yml#/responses/AuthUnauthorizedResponse"
+    put:
+      security:
+        - Bearer: []
+      description: Update key metadata
+      tags:
+        - kms
+      summary: Update key
+      operationId: PutUpdateKeyRoute
+      parameters:
+        - $ref: "#/parameters/keyIdParam"
+        - name: Payload
+          in: body
+          required: true
+          schema:
+            $ref: ../definitions/kms.yml#/definitions/PutUpdateKeyPayload
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: ../definitions/kms.yml#/definitions/GetKeyResponse
+        "404":
+          $ref: "#/responses/KeyNotFoundResponse"
+        "403":
+          $ref: "#/responses/PolicyDeniedResponse"
+        "401":
+          $ref: "../paths/auth.yml#/responses/AuthUnauthorizedResponse"
+    delete:
+      security:
+        - Bearer: []
+      description: Delete key (schedule for deletion)
+      tags:
+        - kms
+      summary: Delete key
+      operationId: DeleteKeyRoute
+      parameters:
+        - $ref: "#/parameters/keyIdParam"
+      responses:
+        "204":
+          description: Success
+        "404":
+          $ref: "#/responses/KeyNotFoundResponse"
+        "403":
+          $ref: "#/responses/PolicyDeniedResponse"
+        "401":
+          $ref: "../paths/auth.yml#/responses/AuthUnauthorizedResponse"
+  
+  /api/v1/kms/keys/{keyId}/enable:
+    post:
+      security:
+        - Bearer: []
+      description: Enable a disabled key
+      tags:
+        - kms
+      summary: Enable key
+      operationId: PostEnableKeyRoute
+      parameters:
+        - $ref: "#/parameters/keyIdParam"
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: ../definitions/kms.yml#/definitions/GetKeyResponse
+        "404":
+          $ref: "#/responses/KeyNotFoundResponse"
+        "403":
+          $ref: "#/responses/PolicyDeniedResponse"
+        "401":
+          $ref: "../paths/auth.yml#/responses/AuthUnauthorizedResponse"
+  
+  /api/v1/kms/keys/{keyId}/disable:
+    post:
+      security:
+        - Bearer: []
+      description: Disable a key
+      tags:
+        - kms
+      summary: Disable key
+      operationId: PostDisableKeyRoute
+      parameters:
+        - $ref: "#/parameters/keyIdParam"
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: ../definitions/kms.yml#/definitions/GetKeyResponse
+        "404":
+          $ref: "#/responses/KeyNotFoundResponse"
+        "403":
+          $ref: "#/responses/PolicyDeniedResponse"
+        "401":
+          $ref: "../paths/auth.yml#/responses/AuthUnauthorizedResponse"
+  
+  /api/v1/kms/keys/{keyId}/rotate:
+    post:
+      security:
+        - Bearer: []
+      description: Rotate key (create new version)
+      tags:
+        - kms
+      summary: Rotate key
+      operationId: PostRotateKeyRoute
+      parameters:
+        - $ref: "#/parameters/keyIdParam"
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: ../definitions/kms.yml#/definitions/GetKeyResponse
+        "404":
+          $ref: "#/responses/KeyNotFoundResponse"
+        "403":
+          $ref: "#/responses/PolicyDeniedResponse"
+        "401":
+          $ref: "../paths/auth.yml#/responses/AuthUnauthorizedResponse"
+  
+  # 加密解密 API
+  /api/v1/kms/encrypt:
+    post:
+      security:
+        - Bearer: []
+      description: Encrypt data using a KMS key
+      tags:
+        - kms
+      summary: Encrypt data
+      operationId: PostEncryptRoute
+      parameters:
+        - name: Payload
+          in: body
+          required: true
+          schema:
+            $ref: ../definitions/kms.yml#/definitions/PostEncryptPayload
+      responses:
+        "200":
+          description: PostEncryptResponse
+          schema:
+            $ref: ../definitions/kms.yml#/definitions/PostEncryptResponse
+        "400":
+          $ref: "#/responses/ValidationError"
+        "404":
+          $ref: "#/responses/KeyNotFoundResponse"
+        "403":
+          $ref: "#/responses/KeyDisabledResponse"
+        "401":
+          $ref: "../paths/auth.yml#/responses/AuthUnauthorizedResponse"
+  
+  /api/v1/kms/decrypt:
+    post:
+      security:
+        - Bearer: []
+      description: Decrypt data using a KMS key
+      tags:
+        - kms
+      summary: Decrypt data
+      operationId: PostDecryptRoute
+      parameters:
+        - name: Payload
+          in: body
+          required: true
+          schema:
+            $ref: ../definitions/kms.yml#/definitions/PostDecryptPayload
+      responses:
+        "200":
+          description: PostDecryptResponse
+          schema:
+            $ref: ../definitions/kms.yml#/definitions/PostDecryptResponse
+        "400":
+          $ref: "#/responses/ValidationError"
+        "404":
+          $ref: "#/responses/KeyNotFoundResponse"
+        "400":
+          $ref: "#/responses/InvalidCiphertextResponse"
+        "401":
+          $ref: "../paths/auth.yml#/responses/AuthUnauthorizedResponse"
+  
+  /api/v1/kms/generate-data-key:
+    post:
+      security:
+        - Bearer: []
+      description: Generate a data encryption key (DEK) encrypted by a KMS key (KEK)
+      tags:
+        - kms
+      summary: Generate data key
+      operationId: PostGenerateDataKeyRoute
+      parameters:
+        - name: Payload
+          in: body
+          required: true
+          schema:
+            $ref: ../definitions/kms.yml#/definitions/PostGenerateDataKeyPayload
+      responses:
+        "200":
+          description: PostGenerateDataKeyResponse
+          schema:
+            $ref: ../definitions/kms.yml#/definitions/PostGenerateDataKeyResponse
+        "400":
+          $ref: "#/responses/ValidationError"
+        "404":
+          $ref: "#/responses/KeyNotFoundResponse"
+        "403":
+          $ref: "#/responses/KeyDisabledResponse"
+        "401":
+          $ref: "../paths/auth.yml#/responses/AuthUnauthorizedResponse"
+  
+  # 签名验证 API
+  /api/v1/kms/sign:
+    post:
+      security:
+        - Bearer: []
+      description: Sign a message using a KMS key
+      tags:
+        - kms
+      summary: Sign message
+      operationId: PostSignRoute
+      parameters:
+        - name: Payload
+          in: body
+          required: true
+          schema:
+            $ref: ../definitions/kms.yml#/definitions/PostSignPayload
+      responses:
+        "200":
+          description: PostSignResponse
+          schema:
+            $ref: ../definitions/kms.yml#/definitions/PostSignResponse
+        "400":
+          $ref: "#/responses/ValidationError"
+        "404":
+          $ref: "#/responses/KeyNotFoundResponse"
+        "403":
+          $ref: "#/responses/KeyDisabledResponse"
+        "401":
+          $ref: "../paths/auth.yml#/responses/AuthUnauthorizedResponse"
+  
+  /api/v1/kms/verify:
+    post:
+      security:
+        - Bearer: []
+      description: Verify a signature using a KMS key
+      tags:
+        - kms
+      summary: Verify signature
+      operationId: PostVerifyRoute
+      parameters:
+        - name: Payload
+          in: body
+          required: true
+          schema:
+            $ref: ../definitions/kms.yml#/definitions/PostVerifyPayload
+      responses:
+        "200":
+          description: PostVerifyResponse
+          schema:
+            $ref: ../definitions/kms.yml#/definitions/PostVerifyResponse
+        "400":
+          $ref: "#/responses/ValidationError"
+        "404":
+          $ref: "#/responses/KeyNotFoundResponse"
+        "400":
+          $ref: "#/responses/InvalidSignatureResponse"
+        "401":
+          $ref: "../paths/auth.yml#/responses/AuthUnauthorizedResponse"
+  
+  # 策略管理 API
+  /api/v1/kms/policies:
+    post:
+      security:
+        - Bearer: []
+      description: Create a new policy
+      tags:
+        - kms
+      summary: Create policy
+      operationId: PostCreatePolicyRoute
+      parameters:
+        - name: Payload
+          in: body
+          required: true
+          schema:
+            $ref: ../definitions/kms.yml#/definitions/PostCreatePolicyPayload
+      responses:
+        "201":
+          description: CreatePolicyResponse
+          schema:
+            $ref: ../definitions/kms.yml#/definitions/CreatePolicyResponse
+        "400":
+          $ref: "#/responses/ValidationError"
+        "401":
+          $ref: "../paths/auth.yml#/responses/AuthUnauthorizedResponse"
+    get:
+      security:
+        - Bearer: []
+      description: List all policies
+      tags:
+        - kms
+      summary: List policies
+      operationId: GetListPoliciesRoute
+      responses:
+        "200":
+          description: ListPoliciesResponse
+          schema:
+            $ref: ../definitions/kms.yml#/definitions/ListPoliciesResponse
+        "401":
+          $ref: "../paths/auth.yml#/responses/AuthUnauthorizedResponse"
+  
+  /api/v1/kms/policies/{policyId}:
+    get:
+      security:
+        - Bearer: []
+      description: Get policy by ID
+      tags:
+        - kms
+      summary: Get policy
+      operationId: GetPolicyRoute
+      parameters:
+        - type: string
+          in: path
+          name: policyId
+          description: Policy ID
+          required: true
+      responses:
+        "200":
+          description: GetPolicyResponse
+          schema:
+            $ref: ../definitions/kms.yml#/definitions/GetPolicyResponse
+        "404":
+          description: Policy not found
+          schema:
+            $ref: ../definitions/errors.yml#/definitions/PublicHTTPError
+        "401":
+          $ref: "../paths/auth.yml#/responses/AuthUnauthorizedResponse"
+    put:
+      security:
+        - Bearer: []
+      description: Update policy
+      tags:
+        - kms
+      summary: Update policy
+      operationId: PutUpdatePolicyRoute
+      parameters:
+        - type: string
+          in: path
+          name: policyId
+          description: Policy ID
+          required: true
+        - name: Payload
+          in: body
+          required: true
+          schema:
+            $ref: ../definitions/kms.yml#/definitions/PutUpdatePolicyPayload
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: ../definitions/kms.yml#/definitions/GetPolicyResponse
+        "404":
+          description: Policy not found
+          schema:
+            $ref: ../definitions/errors.yml#/definitions/PublicHTTPError
+        "401":
+          $ref: "../paths/auth.yml#/responses/AuthUnauthorizedResponse"
+    delete:
+      security:
+        - Bearer: []
+      description: Delete policy
+      tags:
+        - kms
+      summary: Delete policy
+      operationId: DeletePolicyRoute
+      parameters:
+        - type: string
+          in: path
+          name: policyId
+          description: Policy ID
+          required: true
+      responses:
+        "204":
+          description: Success
+        "404":
+          description: Policy not found
+          schema:
+            $ref: ../definitions/errors.yml#/definitions/PublicHTTPError
+        "401":
+          $ref: "../paths/auth.yml#/responses/AuthUnauthorizedResponse"
+  
+  # 审计日志 API
+  /api/v1/kms/audit-logs:
+    get:
+      security:
+        - Bearer: []
+      description: Query audit logs
+      tags:
+        - kms
+      summary: Get audit logs
+      operationId: GetAuditLogsRoute
+      parameters:
+        - name: start_time
+          type: string
+          format: date-time
+          in: query
+          description: Start time
+        - name: end_time
+          type: string
+          format: date-time
+          in: query
+          description: End time
+        - name: key_id
+          type: string
+          in: query
+          description: Filter by key ID
+        - name: user_id
+          type: string
+          in: query
+          description: Filter by user ID
+        - name: event_type
+          type: string
+          in: query
+          description: Filter by event type
+        - name: operation
+          type: string
+          in: query
+          description: Filter by operation
+        - name: result
+          type: string
+          enum:
+            - Success
+            - Failed
+          in: query
+          description: Filter by result
+        - name: limit
+          type: integer
+          in: query
+          description: Maximum number of results
+          default: 100
+        - name: offset
+          type: integer
+          in: query
+          description: Offset for pagination
+          default: 0
+      responses:
+        "200":
+          description: GetAuditLogsResponse
+          schema:
+            $ref: ../definitions/kms.yml#/definitions/GetAuditLogsResponse
+        "401":
+          $ref: "../paths/auth.yml#/responses/AuthUnauthorizedResponse"
+  
+  # Secret 存储 API
+  /api/v1/kms/secrets:
+    post:
+      security:
+        - Bearer: []
+      description: Create a new secret and store encrypted data
+      tags:
+        - kms
+      summary: Create secret
+      operationId: PostCreateSecretRoute
+      parameters:
+        - name: Payload
+          in: body
+          required: true
+          schema:
+            $ref: ../definitions/kms.yml#/definitions/PostCreateSecretPayload
+      responses:
+        "201":
+          description: CreateSecretResponse
+          schema:
+            $ref: ../definitions/kms.yml#/definitions/CreateSecretResponse
+        "400":
+          $ref: "#/responses/ValidationError"
+        "409":
+          description: Secret already exists
+          schema:
+            $ref: ../definitions/errors.yml#/definitions/PublicHTTPError
+        "401":
+          $ref: "../paths/auth.yml#/responses/AuthUnauthorizedResponse"
+  
+  /api/v1/kms/secrets/{keyId}:
+    get:
+      security:
+        - Bearer: []
+      description: Get secret and decrypt data
+      tags:
+        - kms
+      summary: Get secret
+      operationId: GetSecretRoute
+      parameters:
+        - type: string
+          in: path
+          name: keyId
+          description: Secret key ID
+          required: true
+      responses:
+        "200":
+          description: GetSecretResponse
+          schema:
+            $ref: ../definitions/kms.yml#/definitions/GetSecretResponse
+        "404":
+          description: Secret not found
+          schema:
+            $ref: ../definitions/errors.yml#/definitions/PublicHTTPError
+        "401":
+          $ref: "../paths/auth.yml#/responses/AuthUnauthorizedResponse"
+    put:
+      security:
+        - Bearer: []
+      description: Update secret data
+      tags:
+        - kms
+      summary: Update secret
+      operationId: PutUpdateSecretRoute
+      parameters:
+        - type: string
+          in: path
+          name: keyId
+          description: Secret key ID
+          required: true
+        - name: Payload
+          in: body
+          required: true
+          schema:
+            $ref: ../definitions/kms.yml#/definitions/PutUpdateSecretPayload
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: ../definitions/kms.yml#/definitions/GetSecretResponse
+        "404":
+          description: Secret not found
+          schema:
+            $ref: ../definitions/errors.yml#/definitions/PublicHTTPError
+        "401":
+          $ref: "../paths/auth.yml#/responses/AuthUnauthorizedResponse"
+    delete:
+      security:
+        - Bearer: []
+      description: Delete secret
+      tags:
+        - kms
+      summary: Delete secret
+      operationId: DeleteSecretRoute
+      parameters:
+        - type: string
+          in: path
+          name: keyId
+          description: Secret key ID
+          required: true
+      responses:
+        "204":
+          description: Success
+        "404":
+          description: Secret not found
+          schema:
+            $ref: ../definitions/errors.yml#/definitions/PublicHTTPError
+        "401":
+          $ref: "../paths/auth.yml#/responses/AuthUnauthorizedResponse"
+    head:
+      security:
+        - Bearer: []
+      description: Check if secret exists
+      tags:
+        - kms
+      summary: Check secret exists
+      operationId: HeadSecretExistsRoute
+      parameters:
+        - type: string
+          in: path
+          name: keyId
+          description: Secret key ID
+          required: true
+      responses:
+        "200":
+          description: Secret exists
+        "404":
+          description: Secret not found
+        "401":
+          $ref: "../paths/auth.yml#/responses/AuthUnauthorizedResponse"
+
